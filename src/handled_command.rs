@@ -62,6 +62,8 @@ impl HandledCommand {
             .filter_map(|line| line.ok())
             .collect::<Vec<String>>()
         {
+            // TODO: make a debug-handler
+            println!("{}", line);
             for handler in &mut self.handlers {
                 if let Err(e) = handler.process(&line) {
                     return Err(format!("Failed to handle output: {}", e));
