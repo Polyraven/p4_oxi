@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crate::{
     handled_command::Handler,
     warnings::{InfoMessage, WarningMessage},
@@ -42,35 +44,36 @@ impl<'a> Handler for P4CmdHandler {
     }
 }
 
-pub struct OutputHandler<T: for<'de> serde::de::Deserialize<'de>> {
-    pub results: Vec<T>,
+// Will deserialize each message received back by the command into any type that implements Deserialize
+// The fields of those types are expected to me matched precisely to the response of P4V they meant to process
+// Otherwise it will be returning an Error when such a message is encountered
+pub struct DeserializingHandler<T: for<'de> serde::de::Deserialize<'de>> {
+    // the result is safe to be acessed from a thread if need be
+    pub results: Arc<Mutex<Vec<T>>>,
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> OutputHandler<T> {
-    pub fn new() -> Self {
-        Self {
-            results: Vec::new(),
-        }
-    }
+impl<T: for<'de> serde::de::Deserialize<'de>> DeserializingHandler<T> {
+    pub fn new() -> (Box<Self>, Arc<Mutex<Vec<T>>>) {
+        let result = Arc::new(Mutex::new(Vec::new()));
 
-    pub fn single(&mut self) -> Result<&T, String> {
-        if self.results.len() != 1 {
-            return Err("Non single result found.".to_string());
+        let handler = Self {
+            results: Arc::clone(&result),
         };
 
-        return self
-            .results
-            .iter()
-            .next()
-            .ok_or("Single result failed to return.".to_string());
+        return (Box::new(handler), Arc::clone(&result));
+    }
+
+    pub fn handler() -> Box<Self> {
+        let (handler, _) = Self::new();
+        handler
     }
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> Handler for OutputHandler<T> {
+impl<T: for<'de> serde::de::Deserialize<'de>> Handler for DeserializingHandler<T> {
     fn process(&mut self, value: &String) -> Result<(), String> {
         match serde_json::from_str::<T>(value.as_str()) {
             Ok(parsed) => {
-                self.results.push(parsed);
+                self.results.lock().unwrap().push(parsed);
                 return Ok(());
             }
             Err(e) => {

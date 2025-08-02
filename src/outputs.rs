@@ -2,7 +2,7 @@
 use serde::Deserialize;
 
 #[allow(non_snake_case, dead_code)]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Info {
     pub clientHost: String,
     pub clientCwd: String,
@@ -14,7 +14,26 @@ pub struct Info {
 }
 
 #[allow(non_snake_case, dead_code)]
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Debug, Clone)]
+pub struct FStatOut {
+    pub clientFile: String,
+    pub depotFile: String,
+    pub effectiveComponentType: String,
+    pub haveRev: Option<String>,
+    pub headRev: String,
+    pub headAction: String,
+    pub headChange: String,
+    pub headModTime: String,
+    pub headTime: String,
+    pub isMapped: String,
+    pub pathPermission: Option<String>,
+    pub pathSource: String,
+    pub pathType: String,
+    // Fixme: not complete
+}
+
+#[allow(non_snake_case, dead_code)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct FileAction {
     pub action: String,
     pub clientFile: String,
@@ -25,7 +44,7 @@ pub struct FileAction {
 }
 
 #[allow(non_snake_case, dead_code)]
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Workspace {
     pub Backup: String,
     pub Access: String,

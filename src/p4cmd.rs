@@ -70,7 +70,17 @@ impl P4Cmd {
         self
     }
 
-    pub fn with_output_handler(mut self, handler: Box<dyn Handler>) -> Self {
+    pub fn warning_handler(mut self, handler: Box<dyn Handler>) -> Self {
+        self.handler.warning_handlers.push(handler);
+        self
+    }
+
+    pub fn info_handler(mut self, handler: Box<dyn Handler>) -> Self {
+        self.handler.info_handlers.push(handler);
+        self
+    }
+
+    pub fn output_handler(mut self, handler: Box<dyn Handler>) -> Self {
         self.handler.output_handlers.push(handler);
         self
     }
