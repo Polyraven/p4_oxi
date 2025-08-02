@@ -8,6 +8,7 @@ use serde::Deserialize;
 /// These messages still let p4 continue it's execution.
 /// But listening to these gives the oportunity to react to these.
 /// Thus is why this implementation listen to these in the handler
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct WarningMessage {
     /// will contain the wildcard and the reason in failed
@@ -21,6 +22,7 @@ pub struct WarningMessage {
 /// When P4 won't do something with a file yet it's not really a problem it will output a message like so:
 /// {"data":"<file_path> - must resolve #3 before submitting","level":1}
 /// There is an option to register a handler for these as well
+#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct InfoMessage {
     data: String,

@@ -1,9 +1,7 @@
-use serde::Deserialize;
-
 use crate::{
     global_options::GlobalOptions,
     handled_command::{HandledCommand, Handler},
-    warnings::{InfoMessage, WarningMessage},
+    handlers::P4CmdHandler,
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -24,7 +22,7 @@ use crate::{
 ///
 /// CmdRef documentation:
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct P4Cmd {
     pub g_optipn: GlobalOptions,
     /// The P4 command that will be executed, like fstat, sync, clean etc.
@@ -71,6 +69,11 @@ impl P4Cmd {
             .for_each(|wildcard| self.wildcards.push(wildcard.to_string()));
         self
     }
+
+    pub fn with_output_handler(mut self, handler: Box<dyn Handler>) -> Self {
+        self.handler.output_handlers.push(handler);
+        self
+    }
 }
 
 impl From<P4Cmd> for HandledCommand {
@@ -91,35 +94,5 @@ pub trait P4Execute {
 impl P4Execute for P4Cmd {
     fn execute(self) -> Result<(), String> {
         HandledCommand::from(self).execute()
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct P4CmdHandler {
-    /// Any warning handler that returns error will break the execution.
-    pub warning_handlers: Vec<Box<dyn Handler>>,
-    /// info about certain acrions not being done to individual files.
-    pub info_handlers: Vec<Box<dyn Handler>>,
-    /// The handler that can for example serialize the data or update some fields etc.
-    pub output_handlers: Vec<Box<dyn Handler>>,
-}
-
-impl Handler for P4CmdHandler {
-    fn process(&mut self, value: &String) -> Result<(), String> {
-        if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(value.as_str()) {
-            // potentially expensive use this to detect if something is a warning message
-            println!("{:?}", warning_message);
-            return Ok(());
-        }
-
-        if let Ok(info_message) = serde_json::from_str::<InfoMessage>(value.as_str()) {
-            println!("{:?}", info_message);
-            return Ok(());
-        }
-
-        // TODO: call this only if there is no output handlers registered for the command.
-        println!("unhandled output:\n{}", value);
-
-        Ok(())
     }
 }
