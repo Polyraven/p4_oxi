@@ -1,6 +1,6 @@
-use crate::handled_command::HandledCommand;
+use crate::{handled_command::HandledCommand, p4_command::P4Cmd};
 
-pub use crate::p4_command::P4Command;
+pub use crate::p4_command::P4Execute;
 
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat
 #[derive(Default, Debug)]
@@ -8,14 +8,17 @@ pub struct FStat {
     pub wildcards: Vec<String>,
 }
 
-impl P4Command for FStat {
-    fn build(self) -> HandledCommand {
-        self.prefix().arg("fstat").args(&self.wildcards)
+impl From<FStat> for P4Cmd {
+    fn from(fstat: FStat) -> Self {
+        let mut p4_cmd = P4Cmd::new("fstat");
+        p4_cmd.wildcards = fstat.wildcards;
+        p4_cmd
     }
+}
 
-    fn execute(self) -> Result<Vec<String>, String> {
-        self.build().execute()?;
-        Ok(vec![]) // TODO: collect results and return them
+impl P4Execute for FStat {
+    fn execute(self) -> Result<(), String> {
+        P4Cmd::from(self).execute()
     }
 }
 

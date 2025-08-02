@@ -1,8 +1,9 @@
 use std::ffi::OsStr;
+use std::fmt::Debug;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 
-pub trait Handler {
+pub trait Handler: Debug {
     fn process(&mut self, value: &String) -> Result<(), String>;
 }
 

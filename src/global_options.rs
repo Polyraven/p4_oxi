@@ -9,6 +9,7 @@
 ///
 /// Docs:
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/global.options.html
+#[derive(Debug)]
 pub struct GlobalOptions {
     /// If this is not set to true, this library won't be able to deserialize the returned values
     /// There still might be benefit in running without this sometimes.
