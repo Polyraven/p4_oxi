@@ -1,6 +1,6 @@
-use crate::{handled_command::HandledCommand, p4_command::P4Cmd};
+use crate::p4cmd::P4Cmd;
 
-pub use crate::p4_command::P4Execute;
+pub use crate::p4cmd::P4Execute;
 
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat
 #[derive(Default, Debug)]

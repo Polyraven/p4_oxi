@@ -22,7 +22,7 @@ impl HandledCommand {
         }
     }
 
-    /// Appends arg to the command
+    /// Adds the arg to the command
     pub fn arg(mut self, arg: impl AsRef<OsStr>) -> Self {
         self.command.arg(arg);
         self
@@ -34,12 +34,14 @@ impl HandledCommand {
         self
     }
 
-    pub fn add_handler(&mut self, handler: Box<dyn Handler>) {
-        self.handlers.append(&mut vec![handler]);
+    pub fn handler(mut self, handler: Box<dyn Handler>) -> Self {
+        self.handlers.push(handler);
+        self
     }
 
-    pub fn add_handlers(&mut self, handlers: &mut Vec<Box<dyn Handler>>) {
+    pub fn handlers(mut self, handlers: &mut Vec<Box<dyn Handler>>) -> Self {
         self.handlers.append(handlers);
+        self
     }
 
     pub fn execute(&mut self) -> Result<(), String> {
@@ -61,10 +63,7 @@ impl HandledCommand {
         for line in BufReader::new(stdout_handler)
             .lines()
             .filter_map(|line| line.ok())
-            .collect::<Vec<String>>()
         {
-            // TODO: make a debug-handler
-            println!("{}", line);
             for handler in &mut self.handlers {
                 if let Err(e) = handler.process(&line) {
                     return Err(format!("Failed to handle output: {}", e));

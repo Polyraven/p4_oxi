@@ -1,6 +1,9 @@
+use serde::Deserialize;
+
 use crate::{
     global_options::GlobalOptions,
     handled_command::{HandledCommand, Handler},
+    warnings::{InfoMessage, WarningMessage},
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -11,13 +14,13 @@ use crate::{
 ///
 /// The handlers used in here are also going to be called during command execution, not after.
 ///
-/// ```rust
 /// Example:
+/// ```ignore
 ///     P4Cmd::new("fstat")
 ///     .wildcard(r"c:\my_workspace\my_directory\...")
 ///     .execute()
 ///     .unwrap();
-/// ```
+///```
 ///
 /// CmdRef documentation:
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html
@@ -30,10 +33,8 @@ pub struct P4Cmd {
     pub args: Vec<String>,
     /// Last argument, needs special validation
     pub wildcards: Vec<String>,
-    /// Any warning handler that returns error will break the execution.
-    pub warning_handlers: Vec<Box<dyn Handler>>,
-    /// The handler that can for example serialize the data or update some fields etc.
-    pub output_handlers: Vec<Box<dyn Handler>>,
+    /// All output message will go throug this
+    pub handler: P4CmdHandler,
 }
 
 impl P4Cmd {
@@ -79,6 +80,7 @@ impl From<P4Cmd> for HandledCommand {
             .arg(&p4_cmd.cmd)
             .args(&p4_cmd.args)
             .args(&p4_cmd.wildcards)
+            .handler(Box::new(p4_cmd.handler))
     }
 }
 
@@ -89,5 +91,35 @@ pub trait P4Execute {
 impl P4Execute for P4Cmd {
     fn execute(self) -> Result<(), String> {
         HandledCommand::from(self).execute()
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct P4CmdHandler {
+    /// Any warning handler that returns error will break the execution.
+    pub warning_handlers: Vec<Box<dyn Handler>>,
+    /// info about certain acrions not being done to individual files.
+    pub info_handlers: Vec<Box<dyn Handler>>,
+    /// The handler that can for example serialize the data or update some fields etc.
+    pub output_handlers: Vec<Box<dyn Handler>>,
+}
+
+impl Handler for P4CmdHandler {
+    fn process(&mut self, value: &String) -> Result<(), String> {
+        if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(value.as_str()) {
+            // potentially expensive use this to detect if something is a warning message
+            println!("{:?}", warning_message);
+            return Ok(());
+        }
+
+        if let Ok(info_message) = serde_json::from_str::<InfoMessage>(value.as_str()) {
+            println!("{:?}", info_message);
+            return Ok(());
+        }
+
+        // TODO: call this only if there is no output handlers registered for the command.
+        println!("unhandled output:\n{}", value);
+
+        Ok(())
     }
 }
