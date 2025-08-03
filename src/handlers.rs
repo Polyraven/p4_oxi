@@ -15,7 +15,7 @@ pub struct P4CmdHandler {
     pub output_handlers: Vec<Box<dyn Handler>>,
 }
 
-impl<'a> Handler for P4CmdHandler {
+impl Handler for P4CmdHandler {
     fn process(&mut self, value: &String) -> Result<(), String> {
         if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(value.as_str()) {
             // potentially expensive use this to detect if something is a warning message
@@ -47,29 +47,28 @@ impl<'a> Handler for P4CmdHandler {
 // Will deserialize each message received back by the command into any type that implements Deserialize
 // The fields of those types are expected to me matched precisely to the response of P4V they meant to process
 // Otherwise it will be returning an Error when such a message is encountered
-pub struct DeserializingHandler<T: for<'de> serde::de::Deserialize<'de>> {
+pub struct MsgHandler<T: for<'de> serde::de::Deserialize<'de>> {
     // the result is safe to be acessed from a thread if need be
     pub results: Arc<Mutex<Vec<T>>>,
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> DeserializingHandler<T> {
-    pub fn new() -> (Box<Self>, Arc<Mutex<Vec<T>>>) {
+impl<T: for<'de> serde::de::Deserialize<'de>> MsgHandler<T> {
+    pub fn new() -> Box<Self> {
         let result = Arc::new(Mutex::new(Vec::new()));
 
         let handler = Self {
             results: Arc::clone(&result),
         };
 
-        return (Box::new(handler), Arc::clone(&result));
+        return Box::new(handler);
     }
 
-    pub fn handler() -> Box<Self> {
-        let (handler, _) = Self::new();
-        handler
+    pub fn result_arc_clone(&self) -> Arc<Mutex<Vec<T>>> {
+        Arc::clone(&self.results)
     }
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> Handler for DeserializingHandler<T> {
+impl<T: for<'de> serde::de::Deserialize<'de>> Handler for MsgHandler<T> {
     fn process(&mut self, value: &String) -> Result<(), String> {
         match serde_json::from_str::<T>(value.as_str()) {
             Ok(parsed) => {

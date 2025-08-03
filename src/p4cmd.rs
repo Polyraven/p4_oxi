@@ -36,34 +36,40 @@ pub struct P4Cmd {
 }
 
 impl P4Cmd {
-    pub fn new(cmd: &str) -> Self {
+    pub fn raw(cmd: &str) -> Self {
         P4Cmd {
             cmd: cmd.to_string(),
             ..Default::default()
         }
     }
 
-    pub fn g_options(mut self, g_options: GlobalOptions) -> Self {
+    pub fn with_g_options(mut self, g_options: GlobalOptions) -> Self {
         self.g_optipn = g_options;
         self
     }
 
-    pub fn arg(mut self, arg: &str) -> Self {
+    pub fn with_arg(mut self, arg: &str) -> Self {
         self.args.push(arg.to_string());
         self
     }
 
-    pub fn args(mut self, args: Vec<&str>) -> Self {
+    pub fn with_arg_value(mut self, arg: &str, value: String) -> Self {
+        self.args.push(arg.to_string());
+        self.args.push(value);
+        self
+    }
+
+    pub fn with_args(mut self, args: Vec<&str>) -> Self {
         args.iter().for_each(|arg| self.args.push(arg.to_string()));
         self
     }
 
-    pub fn wildcard(mut self, wildcard: &str) -> Self {
+    pub fn with_wildcard(mut self, wildcard: &str) -> Self {
         self.wildcards.push(wildcard.to_string());
         self
     }
 
-    pub fn wildcards(mut self, wildcards: Vec<&str>) -> Self {
+    pub fn with_wildcards(mut self, wildcards: Vec<&str>) -> Self {
         wildcards
             .iter()
             .for_each(|wildcard| self.wildcards.push(wildcard.to_string()));
@@ -80,7 +86,7 @@ impl P4Cmd {
         self
     }
 
-    pub fn output_handler(mut self, handler: Box<dyn Handler>) -> Self {
+    pub fn with_output_handler(mut self, handler: Box<dyn Handler>) -> Self {
         self.handler.output_handlers.push(handler);
         self
     }

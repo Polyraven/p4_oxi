@@ -1,6 +1,6 @@
-pub mod commands;
+pub mod cmd;
 pub mod global_options;
-pub mod handled_command;
+mod handled_command;
 pub mod handlers;
 pub mod outputs;
 pub mod p4cmd;
