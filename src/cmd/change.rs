@@ -1,0 +1,39 @@
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    cmd::info::P4Info,
+    p4cmd::{P4CmdArgs, ToP4InputSpec},
+};
+
+#[allow(non_snake_case, dead_code)]
+#[derive(Debug, Deserialize, Serialize)]
+pub struct P4ChangelistSpec {
+    Change: String,
+    Client: String,
+    User: String,
+    Status: String,
+    Description: String,
+}
+
+impl P4ChangelistSpec {
+    pub fn new(description: &str) -> Result<Box<Self>, String> {
+        let info = P4Info::default().execute()?;
+
+        Ok(Box::new(Self {
+            Change: "new".to_string(),
+            Client: info.clientName,
+            User: info.userName,
+            Status: "new".to_string(),
+            Description: description.to_string(),
+        }))
+    }
+}
+
+impl ToP4InputSpec for P4ChangelistSpec {
+    fn convert(&self) -> String {
+        format!(
+            "Change: {}\nClient: {}\nUser: {}\nStatus: {}\nDescription:\n\t{}\n",
+            self.Change, self.Client, self.User, self.Status, self.Description
+        )
+    }
+}

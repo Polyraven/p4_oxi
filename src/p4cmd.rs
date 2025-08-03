@@ -33,6 +33,12 @@ pub struct P4Cmd {
     pub wildcards: Vec<String>,
     /// All output message will go throug this
     pub handler: P4CmdHandlers,
+    /// Used when creating a changelist or a stream etc. by feeding the bytes in with stdin.
+    pub input_sepc: Option<Box<dyn ToP4InputSpec>>,
+}
+
+pub trait ToP4InputSpec {
+    fn convert(&self) -> String;
 }
 
 impl P4Cmd {
@@ -91,6 +97,12 @@ impl P4Cmd {
         self
     }
 
+    pub fn with_input_spec(mut self, input_spec: Box<dyn ToP4InputSpec>) -> Self {
+        self.g_optipn.format_as_json = false;
+        self.input_sepc = Some(input_spec);
+        self
+    }
+
     pub fn execute(self) -> Result<HandledCmdOut, String> {
         HandledCommand::from(self).execute()
     }
@@ -98,12 +110,18 @@ impl P4Cmd {
 
 impl From<P4Cmd> for HandledCommand {
     fn from(p4_cmd: P4Cmd) -> HandledCommand {
-        HandledCommand::new("p4")
+        let mut cmd = HandledCommand::new("p4")
             .args(&p4_cmd.g_optipn.to_arg_list())
             .arg(&p4_cmd.cmd)
             .args(&p4_cmd.args)
             .args(&p4_cmd.wildcards)
-            .set_handler(Box::new(p4_cmd.handler))
+            .set_handler(Box::new(p4_cmd.handler));
+
+        if p4_cmd.input_sepc.is_some() {
+            cmd = cmd.set_input(p4_cmd.input_sepc.unwrap().convert());
+        }
+
+        cmd
     }
 }
 

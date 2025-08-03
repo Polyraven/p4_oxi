@@ -20,6 +20,7 @@ pub struct P4InfoOut {
     pub clientRoot: String,
     pub clientStream: String,
     pub serverAddress: String,
+    pub userName: String,
     // Fixme: not complete
 }
 

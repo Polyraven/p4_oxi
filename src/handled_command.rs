@@ -1,5 +1,5 @@
 use std::ffi::OsStr;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};
 
 pub enum ProcessingResult {
@@ -25,6 +25,7 @@ pub struct HandledCommand {
     // Controls wether the output line is supposed to be returned and in which bin (warning or content).
     // In case no handler is defined, everythning is consdiered content.
     handler: Option<Box<dyn Handler>>,
+    input: Option<String>,
 }
 
 impl HandledCommand {
@@ -33,6 +34,7 @@ impl HandledCommand {
         Self {
             command: Command::new(command),
             handler: None,
+            input: None,
         }
     }
 
@@ -53,7 +55,49 @@ impl HandledCommand {
         self
     }
 
+    pub fn set_input(mut self, input: String) -> Self {
+        self.input = Some(input);
+        self
+    }
+
+    fn send_input(&mut self) -> Result<HandledCmdOut, String> {
+        let pipe_result = Command::new("p4")
+            .arg("change")
+            .arg("-i")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn();
+
+        let mut pipe = match pipe_result {
+            Err(e) => return Err(format!("Failed to execute command: {}", e)),
+            Ok(pipe) => pipe,
+        };
+
+        let input = self.input.clone().unwrap();
+        {
+            let stdin = pipe.stdin.as_mut().expect("Failed to open stdin");
+            stdin.write_all(input.as_bytes()).unwrap();
+            stdin.flush().unwrap();
+        }
+
+        let output = pipe.wait_with_output().unwrap();
+        if output.status.success() {
+            let std_out = String::from_utf8_lossy(&output.stdout);
+            let mut result = HandledCmdOut::default();
+            result.content.push(std_out.into_owned());
+            return Ok(result);
+        } else {
+            let std_err = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Failed to write stdin: {}", std_err.to_owned()));
+        }
+    }
+
     pub fn execute(&mut self) -> Result<HandledCmdOut, String> {
+        if self.input.is_some() {
+            return self.send_input();
+        }
+
         let pipe_result = self
             .command
             .stdout(Stdio::piped())

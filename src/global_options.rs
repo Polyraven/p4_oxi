@@ -13,7 +13,7 @@
 pub struct GlobalOptions {
     /// If this is not set to true, this library won't be able to deserialize the returned values
     /// There still might be benefit in running without this sometimes.
-    format_as_json: bool,
+    pub format_as_json: bool,
     // TODO: list is not exhaustive
 }
 
