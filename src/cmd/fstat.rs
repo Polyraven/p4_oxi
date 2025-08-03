@@ -1,10 +1,10 @@
 use serde::Deserialize;
 
-use crate::p4cmd::{P4Cmd, P4CmdArgs};
+use crate::prelude::*;
 
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat
 #[derive(Default, Debug)]
-pub struct FStatArgs {
+pub struct P4FStat {
     pub wildcards: Vec<String>,
     // Produce fstat output for only the first max files.
     pub max: Option<i32>,
@@ -12,7 +12,7 @@ pub struct FStatArgs {
 
 #[allow(non_snake_case, dead_code)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct FStatOut {
+pub struct P4FStatOut {
     pub clientFile: String,
     pub depotFile: String,
     pub effectiveComponentType: String,
@@ -29,7 +29,7 @@ pub struct FStatOut {
     // Fixme: not complete
 }
 
-impl P4CmdArgs<Vec<FStatOut>> for FStatArgs {
+impl P4CmdArgs<Vec<P4FStatOut>> for P4FStat {
     fn to_p4_cmd(&self) -> P4Cmd {
         let mut p4_cmd = P4Cmd::raw("fstat");
 
@@ -42,13 +42,13 @@ impl P4CmdArgs<Vec<FStatOut>> for FStatArgs {
         p4_cmd
     }
 
-    fn execute(self) -> Result<Vec<FStatOut>, String> {
-        self.to_p4_cmd().execute()?.into()
+    fn execute(self) -> Result<Vec<P4FStatOut>, String> {
+        self.to_p4_cmd().execute()?.parse()
     }
 }
 
 // Constructors
-impl FStatArgs {
+impl P4FStat {
     pub fn of_one(wildcard: &str) -> Self {
         Self {
             wildcards: vec![wildcard.to_string()],
@@ -66,7 +66,7 @@ impl FStatArgs {
 
 // Convinience functions:
 pub fn get_list_of_files(wildcards: Vec<&str>) -> Result<Vec<String>, String> {
-    Ok(FStatArgs::of_many(wildcards)
+    Ok(P4FStat::of_many(wildcards)
         .execute()?
         .iter()
         .map(|r| r.clientFile.clone())

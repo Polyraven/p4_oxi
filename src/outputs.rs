@@ -3,18 +3,6 @@ use serde::Deserialize;
 
 #[allow(non_snake_case, dead_code)]
 #[derive(Deserialize, Debug, Clone)]
-pub struct Info {
-    pub clientHost: String,
-    pub clientCwd: String,
-    pub clientName: String,
-    pub clientRoot: String,
-    pub clientStream: String,
-    pub serverAddress: String,
-    // Fixme: not complete
-}
-
-#[allow(non_snake_case, dead_code)]
-#[derive(Deserialize, Debug, Clone)]
 pub struct FileAction {
     pub action: String,
     pub clientFile: String,

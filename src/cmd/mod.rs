@@ -4,3 +4,4 @@
 /// Thise commands would than implement their own handlers and return types,
 /// Not all command would perhaps end up as it's own file, will see how it turns out.
 pub mod fstat;
+pub mod info;

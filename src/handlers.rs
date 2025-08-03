@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use serde::Deserialize;
+use serde::de::DeserializeOwned;
 
 use crate::{
     handled_command::{HandledCmdOut, Handler, ProcessingResult},
@@ -19,8 +19,16 @@ pub trait OutHandler {
     fn process(&mut self, value: &String) -> Result<(), String>;
 }
 
+pub trait P4OutputParsing<T> {
+    fn parse(self) -> Result<Vec<T>, String>;
+}
+
+pub trait P4Single<T> {
+    fn single(self) -> Result<T, String>;
+}
+
 #[derive(Default)]
-pub struct P4CmdHandler {
+pub struct P4CmdHandlers {
     /// Any warning handler that returns error will break the execution.
     pub warning_handlers: Vec<Box<dyn WarningHandler>>,
     /// info about certain acrions not being done to individual files.
@@ -29,7 +37,7 @@ pub struct P4CmdHandler {
     pub output_handlers: Vec<Box<dyn OutHandler>>,
 }
 
-impl Handler for P4CmdHandler {
+impl Handler for P4CmdHandlers {
     fn process(&mut self, value: &String) -> Result<ProcessingResult, String> {
         // potentially expensive use this to detect if something is a warning message
         if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(value.as_str()) {
@@ -57,15 +65,12 @@ impl Handler for P4CmdHandler {
 // Will deserialize each message received back by the command into any type that implements Deserialize
 // The fields of those types are expected to me matched precisely to the response of P4V they meant to process
 // Otherwise it will be returning an Error when such a message is encountered
-pub struct DeserializingHandler<T: for<'de> Deserialize<'de>> {
+pub struct DeserializingHandler<T: DeserializeOwned> {
     // the result is safe to be acessed from a thread if need be
     pub results: Arc<Mutex<Vec<T>>>,
 }
 
-impl<T> DeserializingHandler<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
+impl<T: DeserializeOwned> DeserializingHandler<T> {
     pub fn new() -> Box<Self> {
         let result = Arc::new(Mutex::new(Vec::new()));
 
@@ -81,10 +86,7 @@ where
     }
 }
 
-impl<T> OutHandler for DeserializingHandler<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
+impl<T: DeserializeOwned> OutHandler for DeserializingHandler<T> {
     fn process(&mut self, value: &String) -> Result<(), String> {
         match serde_json::from_str::<T>(value.as_str()) {
             Ok(parsed) => {
@@ -101,13 +103,10 @@ where
     }
 }
 
-impl<T> From<HandledCmdOut> for Result<Vec<T>, String>
-where
-    T: for<'de> Deserialize<'de>,
-{
-    fn from(command_results: HandledCmdOut) -> Result<Vec<T>, String> {
+impl<T: DeserializeOwned> P4OutputParsing<T> for HandledCmdOut {
+    fn parse(self) -> Result<Vec<T>, String> {
         let mut result: Vec<T> = Vec::new();
-        for content_value in command_results.content {
+        for content_value in self.content {
             match serde_json::from_str::<T>(content_value.as_str()) {
                 Err(e) => {
                     return Err(format!(
@@ -119,5 +118,17 @@ where
             }
         }
         Ok(result)
+    }
+}
+
+impl<T: DeserializeOwned> P4Single<T> for Vec<T> {
+    fn single(self) -> Result<T, String> {
+        let count = self.iter().len();
+        if count != 1 {
+            return Err(format!("The number of results is not one ({})", count));
+        };
+        self.into_iter()
+            .next()
+            .ok_or_else(|| "Failed to get info from P4".to_string())
     }
 }

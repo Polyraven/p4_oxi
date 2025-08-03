@@ -1,7 +1,7 @@
 use crate::{
     global_options::GlobalOptions,
     handled_command::{HandledCmdOut, HandledCommand},
-    handlers::{InfoHandler, OutHandler, P4CmdHandler, WarningHandler},
+    handlers::{InfoHandler, OutHandler, P4CmdHandlers, WarningHandler},
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -32,7 +32,7 @@ pub struct P4Cmd {
     /// Last argument, needs special validation
     pub wildcards: Vec<String>,
     /// All output message will go throug this
-    pub handler: P4CmdHandler,
+    pub handler: P4CmdHandlers,
 }
 
 impl P4Cmd {
