@@ -9,7 +9,7 @@ pub enum ProcessingResult {
 }
 
 #[derive(Default)]
-pub struct HandledCommandResults {
+pub struct HandledCmdOut {
     pub warnings: Vec<String>,
     pub content: Vec<String>,
 }
@@ -20,8 +20,11 @@ pub trait Handler {
 
 /// Holds the command arguments and the handlers that will be ran on each output in real time.
 pub struct HandledCommand {
+    // The Command instance that will be executed in a piped subprocess.
     command: Command,
-    handlers: Vec<Box<dyn Handler>>,
+    // Controls wether the output line is supposed to be returned and in which bin (warning or content).
+    // In case no handler is defined, everythning is consdiered content.
+    handler: Option<Box<dyn Handler>>,
 }
 
 impl HandledCommand {
@@ -29,7 +32,7 @@ impl HandledCommand {
     pub fn new(command: impl AsRef<OsStr>) -> Self {
         Self {
             command: Command::new(command),
-            handlers: vec![],
+            handler: None,
         }
     }
 
@@ -45,17 +48,12 @@ impl HandledCommand {
         self
     }
 
-    pub fn handler(mut self, handler: Box<dyn Handler>) -> Self {
-        self.handlers.push(handler);
+    pub fn set_handler(mut self, handler: Box<dyn Handler>) -> Self {
+        self.handler = Some(handler);
         self
     }
 
-    pub fn handlers(mut self, handlers: &mut Vec<Box<dyn Handler>>) -> Self {
-        self.handlers.append(handlers);
-        self
-    }
-
-    pub fn execute(&mut self) -> Result<HandledCommandResults, String> {
+    pub fn execute(&mut self) -> Result<HandledCmdOut, String> {
         let pipe_result = self
             .command
             .stdout(Stdio::piped())
@@ -71,21 +69,23 @@ impl HandledCommand {
             return Err("Failed to capture stdout!".to_string());
         };
 
-        let mut result = HandledCommandResults::default();
+        let mut result = HandledCmdOut::default();
 
         for line in BufReader::new(stdout_handler)
             .lines()
             .filter_map(|line| line.ok())
         {
-            for handler in &mut self.handlers {
-                // TODO: single handler to avoid duplication?
-                // The multiple handlers is much more important for P4V
-                match handler.process(&line) {
-                    Err(e) => return Err(format!("Failed to handle output: {}", e)),
-                    Ok(ProcessingResult::Warning(v)) => result.warnings.push(v),
-                    Ok(ProcessingResult::Content(v)) => result.content.push(v),
-                    _ => {}
-                }
+            let Some(handler) = &mut self.handler else {
+                // In case of no handler, everything is considered a content.
+                result.content.push(line);
+                continue;
+            };
+
+            match handler.process(&line) {
+                Err(e) => return Err(format!("Failed to handle output: {}", e)),
+                Ok(ProcessingResult::Warning(v)) => result.warnings.push(v),
+                Ok(ProcessingResult::Content(v)) => result.content.push(v),
+                _ => {}
             }
         }
 

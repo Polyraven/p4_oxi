@@ -1,6 +1,6 @@
 use crate::{
     global_options::GlobalOptions,
-    handled_command::{HandledCommand, HandledCommandResults},
+    handled_command::{HandledCmdOut, HandledCommand},
     handlers::{InfoHandler, OutHandler, P4CmdHandler, WarningHandler},
 };
 
@@ -90,6 +90,10 @@ impl P4Cmd {
         self.handler.output_handlers.push(handler);
         self
     }
+
+    pub fn execute(self) -> Result<HandledCmdOut, String> {
+        HandledCommand::from(self).execute()
+    }
 }
 
 impl From<P4Cmd> for HandledCommand {
@@ -99,16 +103,12 @@ impl From<P4Cmd> for HandledCommand {
             .arg(&p4_cmd.cmd)
             .args(&p4_cmd.args)
             .args(&p4_cmd.wildcards)
-            .handler(Box::new(p4_cmd.handler))
+            .set_handler(Box::new(p4_cmd.handler))
     }
 }
 
-pub trait P4Execute {
-    fn execute(self) -> Result<HandledCommandResults, String>;
-}
+pub trait P4CmdArgs<T> {
+    fn to_p4_cmd(&self) -> P4Cmd;
 
-impl P4Execute for P4Cmd {
-    fn execute(self) -> Result<HandledCommandResults, String> {
-        HandledCommand::from(self).execute()
-    }
+    fn execute(self) -> Result<T, String>;
 }

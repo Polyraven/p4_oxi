@@ -1,12 +1,10 @@
 use serde::Deserialize;
 
-use crate::{handlers::DeserializingHandler, p4cmd::P4Cmd};
-
-pub use crate::p4cmd::P4Execute;
+use crate::p4cmd::{P4Cmd, P4CmdArgs};
 
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat
 #[derive(Default, Debug)]
-pub struct FStat {
+pub struct FStatArgs {
     pub wildcards: Vec<String>,
     // Produce fstat output for only the first max files.
     pub max: Option<i32>,
@@ -31,7 +29,26 @@ pub struct FStatOut {
     // Fixme: not complete
 }
 
-impl FStat {
+impl P4CmdArgs<Vec<FStatOut>> for FStatArgs {
+    fn to_p4_cmd(&self) -> P4Cmd {
+        let mut p4_cmd = P4Cmd::raw("fstat");
+
+        if let Some(v) = self.max {
+            p4_cmd = p4_cmd.with_arg_value("-m", v.to_string());
+        };
+
+        p4_cmd.wildcards = self.wildcards.clone();
+
+        p4_cmd
+    }
+
+    fn execute(self) -> Result<Vec<FStatOut>, String> {
+        self.to_p4_cmd().execute()?.into()
+    }
+}
+
+// Constructors
+impl FStatArgs {
     pub fn of_one(wildcard: &str) -> Self {
         Self {
             wildcards: vec![wildcard.to_string()],
@@ -45,42 +62,13 @@ impl FStat {
             ..Default::default()
         }
     }
-
-    pub fn to_p4cmd(&self) -> P4Cmd {
-        let mut p4_cmd = P4Cmd::raw("fstat");
-
-        if let Some(v) = self.max {
-            p4_cmd = p4_cmd.with_arg_value("-m", v.to_string());
-        };
-
-        p4_cmd.wildcards = self.wildcards.clone();
-
-        p4_cmd
-    }
 }
 
-impl From<FStat> for P4Cmd {
-    fn from(fstat: FStat) -> Self {
-        fstat.to_p4cmd()
-    }
-}
-
-impl FStat {
-    fn execute(self) -> Result<Vec<FStatOut>, String> {
-        let handler = DeserializingHandler::<FStatOut>::new();
-        let result = handler.result_arc_clone();
-
-        self.to_p4cmd().with_output_handler(handler).execute()?;
-
-        let res: Vec<FStatOut> = result.lock().unwrap().iter().cloned().collect();
-        return Ok(res);
-    }
-}
-
+// Convinience functions:
 pub fn get_list_of_files(wildcards: Vec<&str>) -> Result<Vec<String>, String> {
-    let result = FStat::of_many(wildcards).execute()?;
-
-    let files: Vec<String> = result.iter().map(|r| r.clientFile.clone()).collect();
-
-    Ok(files)
+    Ok(FStatArgs::of_many(wildcards)
+        .execute()?
+        .iter()
+        .map(|r| r.clientFile.clone())
+        .collect())
 }

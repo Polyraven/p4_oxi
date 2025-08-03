@@ -1,7 +1,9 @@
 use std::sync::{Arc, Mutex};
 
+use serde::Deserialize;
+
 use crate::{
-    handled_command::{Handler, ProcessingResult},
+    handled_command::{HandledCmdOut, Handler, ProcessingResult},
     warnings::{InfoMessage, WarningMessage},
 };
 
@@ -55,12 +57,15 @@ impl Handler for P4CmdHandler {
 // Will deserialize each message received back by the command into any type that implements Deserialize
 // The fields of those types are expected to me matched precisely to the response of P4V they meant to process
 // Otherwise it will be returning an Error when such a message is encountered
-pub struct DeserializingHandler<T: for<'de> serde::de::Deserialize<'de>> {
+pub struct DeserializingHandler<T: for<'de> Deserialize<'de>> {
     // the result is safe to be acessed from a thread if need be
     pub results: Arc<Mutex<Vec<T>>>,
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> DeserializingHandler<T> {
+impl<T> DeserializingHandler<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
     pub fn new() -> Box<Self> {
         let result = Arc::new(Mutex::new(Vec::new()));
 
@@ -76,7 +81,10 @@ impl<T: for<'de> serde::de::Deserialize<'de>> DeserializingHandler<T> {
     }
 }
 
-impl<T: for<'de> serde::de::Deserialize<'de>> OutHandler for DeserializingHandler<T> {
+impl<T> OutHandler for DeserializingHandler<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
     fn process(&mut self, value: &String) -> Result<(), String> {
         match serde_json::from_str::<T>(value.as_str()) {
             Ok(parsed) => {
@@ -90,5 +98,26 @@ impl<T: for<'de> serde::de::Deserialize<'de>> OutHandler for DeserializingHandle
                 ));
             }
         }
+    }
+}
+
+impl<T> From<HandledCmdOut> for Result<Vec<T>, String>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    fn from(command_results: HandledCmdOut) -> Result<Vec<T>, String> {
+        let mut result: Vec<T> = Vec::new();
+        for content_value in command_results.content {
+            match serde_json::from_str::<T>(content_value.as_str()) {
+                Err(e) => {
+                    return Err(format!(
+                        "Failed to serialize \n error: {} \n value: {} |",
+                        e, content_value
+                    ));
+                }
+                Ok(serialized) => result.push(serialized),
+            }
+        }
+        Ok(result)
     }
 }
