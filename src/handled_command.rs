@@ -2,8 +2,20 @@ use std::ffi::OsStr;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 
+pub enum ProcessingResult {
+    Warning(String),
+    Content(String),
+    Silent,
+}
+
+#[derive(Default)]
+pub struct HandledCommandResults {
+    pub warnings: Vec<String>,
+    pub content: Vec<String>,
+}
+
 pub trait Handler {
-    fn process(&mut self, value: &String) -> Result<(), String>;
+    fn process(&mut self, value: &String) -> Result<ProcessingResult, String>;
 }
 
 /// Holds the command arguments and the handlers that will be ran on each output in real time.
@@ -43,7 +55,7 @@ impl HandledCommand {
         self
     }
 
-    pub fn execute(&mut self) -> Result<(), String> {
+    pub fn execute(&mut self) -> Result<HandledCommandResults, String> {
         let pipe_result = self
             .command
             .stdout(Stdio::piped())
@@ -59,13 +71,20 @@ impl HandledCommand {
             return Err("Failed to capture stdout!".to_string());
         };
 
+        let mut result = HandledCommandResults::default();
+
         for line in BufReader::new(stdout_handler)
             .lines()
             .filter_map(|line| line.ok())
         {
             for handler in &mut self.handlers {
-                if let Err(e) = handler.process(&line) {
-                    return Err(format!("Failed to handle output: {}", e));
+                // TODO: single handler to avoid duplication?
+                // The multiple handlers is much more important for P4V
+                match handler.process(&line) {
+                    Err(e) => return Err(format!("Failed to handle output: {}", e)),
+                    Ok(ProcessingResult::Warning(v)) => result.warnings.push(v),
+                    Ok(ProcessingResult::Content(v)) => result.content.push(v),
+                    _ => {}
                 }
             }
         }
@@ -89,7 +108,7 @@ impl HandledCommand {
                 exit_status, error_string
             ));
         } else {
-            return Ok(());
+            return Ok(result);
         }
     }
 }

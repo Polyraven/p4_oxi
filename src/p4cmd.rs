@@ -1,7 +1,7 @@
 use crate::{
     global_options::GlobalOptions,
-    handled_command::{HandledCommand, Handler},
-    handlers::P4CmdHandler,
+    handled_command::{HandledCommand, HandledCommandResults},
+    handlers::{InfoHandler, OutHandler, P4CmdHandler, WarningHandler},
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -76,17 +76,17 @@ impl P4Cmd {
         self
     }
 
-    pub fn warning_handler(mut self, handler: Box<dyn Handler>) -> Self {
+    pub fn warning_handler(mut self, handler: Box<dyn WarningHandler>) -> Self {
         self.handler.warning_handlers.push(handler);
         self
     }
 
-    pub fn info_handler(mut self, handler: Box<dyn Handler>) -> Self {
+    pub fn info_handler(mut self, handler: Box<dyn InfoHandler>) -> Self {
         self.handler.info_handlers.push(handler);
         self
     }
 
-    pub fn with_output_handler(mut self, handler: Box<dyn Handler>) -> Self {
+    pub fn with_output_handler(mut self, handler: Box<dyn OutHandler>) -> Self {
         self.handler.output_handlers.push(handler);
         self
     }
@@ -104,11 +104,11 @@ impl From<P4Cmd> for HandledCommand {
 }
 
 pub trait P4Execute {
-    fn execute(self) -> Result<(), String>;
+    fn execute(self) -> Result<HandledCommandResults, String>;
 }
 
 impl P4Execute for P4Cmd {
-    fn execute(self) -> Result<(), String> {
+    fn execute(self) -> Result<HandledCommandResults, String> {
         HandledCommand::from(self).execute()
     }
 }

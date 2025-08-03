@@ -12,12 +12,14 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct WarningMessage {
     /// will contain the wildcard and the reason in failed
-    data: String,
+    pub data: String,
     /// the furnction of this is unknown
-    generic: i32,
-    /// irrelevant to us
-    severity: i32,
+    pub generic: i32,
+    /// irrelevant to us (actually severity 3 means it could not run)
+    pub severity: i32,
 }
+
+impl WarningMessage {}
 
 /// When P4 won't do something with a file yet it's not really a problem it will output a message like so:
 /// {"data":"<file_path> - must resolve #3 before submitting","level":1}
@@ -25,6 +27,6 @@ pub struct WarningMessage {
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct InfoMessage {
-    data: String,
-    level: i32,
+    pub data: String,
+    pub level: i32,
 }

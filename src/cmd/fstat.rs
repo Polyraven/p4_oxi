@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{handlers::MsgHandler, p4cmd::P4Cmd};
+use crate::{handlers::DeserializingHandler, p4cmd::P4Cmd};
 
 pub use crate::p4cmd::P4Execute;
 
@@ -67,7 +67,7 @@ impl From<FStat> for P4Cmd {
 
 impl FStat {
     fn execute(self) -> Result<Vec<FStatOut>, String> {
-        let handler = MsgHandler::<FStatOut>::new();
+        let handler = DeserializingHandler::<FStatOut>::new();
         let result = handler.result_arc_clone();
 
         self.to_p4cmd().with_output_handler(handler).execute()?;
