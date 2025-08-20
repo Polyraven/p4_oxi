@@ -1,13 +1,15 @@
+//! Display information about the current P4 Server application and the shared versioning service.
+//!
+//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_info.html#p4_info>
+
 use serde::Deserialize;
 
 use crate::prelude::*;
 
-// Display information about the current P4 Server application and the shared versioning service.
-//
-// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_info.html#p4_info
 #[derive(Default, Debug)]
+/// Argument builder for the info command.
 pub struct P4Info {
-    // Shortened output: exclude information (for example, the workspace root) that requires a database lookup.
+    /// exclude information (for example, the workspace root) that requires a database lookup.
     shortened: bool,
 }
 

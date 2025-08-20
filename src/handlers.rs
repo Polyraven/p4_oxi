@@ -1,3 +1,6 @@
+//! Defines traits and blanket implementations for handling p4 command output
+//! both for on the fly and after the command finishes.
+
 use std::sync::{Arc, Mutex};
 
 use serde::de::DeserializeOwned;
@@ -62,11 +65,11 @@ impl Handler for P4CmdHandlers {
     }
 }
 
-// Will deserialize each message received back by the command into any type that implements Deserialize
-// The fields of those types are expected to me matched precisely to the response of P4V they meant to process
-// Otherwise it will be returning an Error when such a message is encountered
+/// Will deserialize each message received back by the command into any type that implements Deserialize.
+/// The fields of those types are expected to be matched precisely to the response of P4V they meant to process.
+/// Otherwise it will be returning an Error when such a message is encountered.
 pub struct DeserializingHandler<T: DeserializeOwned> {
-    // the result is safe to be acessed from a thread if need be
+    /// the result is safe to be acessed from a thread if need be
     pub results: Arc<Mutex<Vec<T>>>,
 }
 

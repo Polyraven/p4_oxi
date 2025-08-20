@@ -1,4 +1,4 @@
-/// Holds the structs of deserialized output responses of the commands.
+//! Common structs for deserializable output responses of the commands.
 use serde::Deserialize;
 
 #[allow(non_snake_case, dead_code)]

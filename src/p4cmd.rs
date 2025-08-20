@@ -1,3 +1,5 @@
+//! General wrapper around P4 CLI commands.
+
 use crate::{
     global_options::GlobalOptions,
     handled_command::{HandledCmdOut, HandledCommand},

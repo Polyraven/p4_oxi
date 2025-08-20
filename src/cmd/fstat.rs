@@ -1,18 +1,31 @@
+//! Gets file informations of each file.
+//!
+//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat>
+//!
+
 use serde::Deserialize;
 
 use crate::prelude::*;
 
-/// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat
 #[derive(Default, Debug)]
+/// Argument builder for the fstat command.
+///
+/// Example:
+///
+/// ```rust, no_run
+/// let fstats = P4Fstat::of_one(wildcard).execute()?
+/// ```
 pub struct P4FStat {
+    #[doc = include_str!("wildcards.md")]
     pub wildcards: Vec<String>,
-    // Produce fstat output for only the first max files.
+    /// Produce fstat output for only the first max files.
     pub max: Option<i32>,
 }
 
 #[allow(non_snake_case, dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct P4FStatOut {
+    /// !
     pub clientFile: String,
     pub depotFile: String,
     pub effectiveComponentType: String,

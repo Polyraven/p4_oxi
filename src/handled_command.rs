@@ -1,3 +1,5 @@
+//! Opinionated wrapper around subprocess calls so they can be handeled on the fly.
+
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Command, Stdio};

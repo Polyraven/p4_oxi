@@ -1,3 +1,6 @@
+//! Work in progress crate to interact with P4 server.\
+//! Mostly planned/intended to be used fro client side applications.
+
 pub mod cmd;
 pub mod global_options;
 mod handled_command;
