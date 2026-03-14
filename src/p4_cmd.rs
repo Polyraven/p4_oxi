@@ -1,11 +1,13 @@
 //! General wrapper around P4 CLI commands.
 
+use serde::de::DeserializeOwned;
+
 use crate::{
     global_options::GlobalOptions,
     handled_command::HandledCommand,
     handlers::{InfoHandler, OutHandler, P4CmdHandlers, WarningHandler},
     iter_cmd::IterCmd,
-    p4_running_cmd::P4RunningCmd,
+    p4_running_cmd::{P4RunningCmd, P4TypedRunningCmd},
     warnings::P4Message,
 };
 
@@ -104,7 +106,7 @@ impl P4Cmd {
         self
     }
 
-    pub fn run<T>(self) -> Result<P4RunningCmd<T>, String> {
+    pub fn run(self) -> Result<P4RunningCmd, String> {
         if self.input_sepcification.is_some() {
             return Err(
                 "A command cannot be called when input_spec is set (unintended missue? For uploading specs call .submit_spec())".to_string(),
@@ -112,11 +114,13 @@ impl P4Cmd {
         }
 
         let iter_cmd = IterCmd::from(self).run()?;
-        Ok(P4RunningCmd::new(iter_cmd))
+        Ok(P4RunningCmd {
+            inner_iter_cmd: iter_cmd,
+        })
     }
 
-    pub fn execute<T>(self) -> Result<Vec<Result<T, P4Message>>, String> {
-        self.run::<T>()?.collect()
+    pub fn execute(self) -> Result<Vec<Result<String, P4Message>>, String> {
+        Ok(self.run()?.cast::<String>().collect())
     }
 
     pub fn submit_spec(self) -> Result<String, String> {
@@ -158,15 +162,23 @@ impl From<P4Cmd> for IterCmd {
     }
 }
 
-pub trait P4CmdArgs<T> {
+pub trait P4CmdArgs {
+    type Output;
+
     fn to_p4_cmd(&self) -> P4Cmd;
 
-    fn run(&self) -> Result<P4RunningCmd<T>, String> {
-        self.to_p4_cmd().run::<T>()
+    fn run(&self) -> Result<P4TypedRunningCmd<Self::Output>, String>
+    where
+        Self::Output: DeserializeOwned,
+    {
+        Ok(self.to_p4_cmd().run()?.cast())
     }
 
-    fn execute(&self) -> Result<Vec<Result<T, P4Message>>, String> {
-        self.to_p4_cmd().execute::<T>()
+    fn execute(&self) -> Result<Vec<Result<Self::Output, P4Message>>, String>
+    where
+        Self::Output: DeserializeOwned,
+    {
+        Ok(self.run()?.collect())
     }
 
     fn submit_spec(&self) -> Result<String, String> {

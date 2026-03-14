@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 use crate::{
     handled_command::{HandledCmdOutput, Handler, ProcessingResult},
-    warnings::{InfoMessage, WarningMessage},
+    warnings::{InfoMessage, P4Message, WarningMessage},
 };
 
 pub trait WarningHandler {
@@ -124,7 +124,7 @@ impl<T: DeserializeOwned> P4OutputParsing<T> for HandledCmdOutput {
     }
 }
 
-impl<T: DeserializeOwned> P4Single<T> for Vec<T> {
+impl<T: DeserializeOwned> P4Single<T> for Vec<Result<T, P4Message>> {
     fn single(self) -> Result<T, String> {
         let count = self.iter().len();
         if count != 1 {
@@ -132,6 +132,7 @@ impl<T: DeserializeOwned> P4Single<T> for Vec<T> {
         };
         self.into_iter()
             .next()
-            .ok_or_else(|| "Failed to get info from P4".to_string())
+            .unwrap()
+            .map_err(|_| "Failed to get info from P4".to_string())
     }
 }

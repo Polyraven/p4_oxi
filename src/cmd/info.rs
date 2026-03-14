@@ -28,7 +28,9 @@ pub struct P4InfoOut {
     // Fixme: not complete
 }
 
-impl P4CmdArgs<P4InfoOut> for P4Info {
+impl P4CmdArgs for P4Info {
+    type Output = P4InfoOut;
+
     fn to_p4_cmd(&self) -> P4Cmd {
         let mut p4_cmd = P4Cmd::raw("info");
 

@@ -1,24 +1,28 @@
 use serde::de::DeserializeOwned;
+use std::marker::PhantomData;
 
 use crate::iter_cmd::RunningIterCmd;
 use crate::warnings::{Failure, InfoMessage, P4Message, ParseError, WarningMessage};
 
-pub struct P4RunningCmd<T> {
-    inner: RunningIterCmd,
-    _phantom: std::marker::PhantomData<T>,
+pub struct P4RunningCmd {
+    pub inner_iter_cmd: RunningIterCmd,
 }
 
-impl<T> P4RunningCmd<T> {
-    pub fn new(inner: RunningIterCmd) -> Self {
-        Self {
-            inner,
-            _phantom: std::marker::PhantomData,
+impl P4RunningCmd {
+    pub fn cast<T>(self) -> P4TypedRunningCmd<T> {
+        P4TypedRunningCmd {
+            inner_p4_running_cmd: self,
+            _phantom: PhantomData,
         }
     }
+}
 
-    pub fn next_raw(&mut self) -> Option<Result<String, P4Message>> {
+impl Iterator for P4RunningCmd {
+    type Item = Result<String, P4Message>;
+
+    fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let Some(value) = self.inner.next() else {
+            let Some(value) = self.inner_iter_cmd.next() else {
                 return None;
             };
 
@@ -40,11 +44,16 @@ impl<T> P4RunningCmd<T> {
     }
 }
 
-impl<T: DeserializeOwned> Iterator for P4RunningCmd<T> {
+pub struct P4TypedRunningCmd<T> {
+    inner_p4_running_cmd: P4RunningCmd,
+    _phantom: PhantomData<T>,
+}
+
+impl<T: DeserializeOwned> Iterator for P4TypedRunningCmd<T> {
     type Item = Result<T, P4Message>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.next_raw()? {
+        match self.inner_p4_running_cmd.next()? {
             Err(msg) => Some(Err(msg)),
             Ok(line) => Some(serde_json::from_str::<T>(&line).map_err(|e| {
                 P4Message::ParseError(ParseError {

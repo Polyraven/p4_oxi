@@ -42,7 +42,9 @@ pub struct P4FStatOut {
     // Fixme: not complete
 }
 
-impl P4CmdArgs<Vec<P4FStatOut>> for P4FStat {
+impl P4CmdArgs for P4FStat {
+    type Output = P4FStatOut;
+
     fn to_p4_cmd(&self) -> P4Cmd {
         let mut p4_cmd = P4Cmd::raw("fstat");
 
@@ -78,6 +80,7 @@ pub fn get_list_of_files(wildcards: Vec<&str>) -> Result<Vec<String>, String> {
     Ok(P4FStat::of_many(wildcards)
         .execute()?
         .iter()
+        .filter_map(|r| r.as_ref().ok())
         .map(|r| r.clientFile.clone())
         .collect())
 }
