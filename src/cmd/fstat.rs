@@ -80,7 +80,7 @@ impl P4FStat {
 pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, String> {
     Ok(P4FStat::of_many(wildcards)
         .run()?
-        .filter_map(|r| r.ok())
-        .map(|r| r.clientFile)
+        .filter_map(|v| v.take_content())
+        .map(|v| v.clientFile)
         .collect())
 }

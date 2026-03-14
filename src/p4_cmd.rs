@@ -151,14 +151,13 @@ pub trait P4Cmd {
         Ok(self.to_p4_query_cmd().run()?.cast())
     }
 
-    fn single(&self) -> Result<Self::Output, String>
+    fn single(&self) -> Result<P4Out<Self::Output>, String>
     where
         Self::Output: DeserializeOwned,
     {
         self.run()?
             .next()
-            .ok_or_else(|| "Expected a single result but got none".to_string())?
-            .map_err(|e| format!("{:?}", e))
+            .ok_or_else(|| "Expected a single result but got none".to_string())
     }
 }
 

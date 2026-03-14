@@ -35,7 +35,9 @@ pub struct P4ChangelistSpec {
 
 impl P4ChangelistSpec {
     pub fn new(description: &str) -> Result<Box<Self>, String> {
-        let info = P4Info::default().single()?;
+        let Some(info) = P4Info::default().single()?.take_content() else {
+            return Err("No Info received".to_string());
+        };
 
         Ok(Box::new(Self {
             Change: "new".to_string(),

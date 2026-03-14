@@ -39,7 +39,7 @@ impl P4RunningCmd {
 }
 
 impl Iterator for P4RunningCmd {
-    type Item = Result<String, P4Out>;
+    type Item = P4Out<String>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -48,17 +48,17 @@ impl Iterator for P4RunningCmd {
             };
 
             match value {
-                Err(e) => return Some(Err(P4Out::Failure(Failure { data: e }))),
+                Err(e) => return Some(P4Out::Failure(Failure { data: e })),
                 Ok(line) => {
                     if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(&line) {
-                        return Some(Err(P4Out::Warning(warning_message)));
+                        return Some(P4Out::Warning(warning_message));
                     }
 
                     if let Ok(info_message) = serde_json::from_str::<InfoMessage>(&line) {
-                        return Some(Err(P4Out::Info(info_message)));
+                        return Some(P4Out::Info(info_message));
                     }
 
-                    return Some(Ok(line));
+                    return Some(P4Out::Content(line));
                 }
             }
         }
@@ -78,17 +78,21 @@ pub struct P4TypedRunningCmd<T> {
 }
 
 impl<T: DeserializeOwned> Iterator for P4TypedRunningCmd<T> {
-    type Item = Result<T, P4Out>;
+    type Item = P4Out<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.inner_p4_running_cmd.next()? {
-            Err(msg) => Some(Err(msg)),
-            Ok(line) => Some(serde_json::from_str::<T>(&line).map_err(|e| {
-                P4Out::ParseError(ParseError {
+            P4Out::Content(line) => match serde_json::from_str::<T>(&line) {
+                Ok(val) => Some(P4Out::Content(val)),
+                Err(e) => Some(P4Out::ParseError(ParseError {
                     data: line,
                     error: e.to_string(),
-                })
-            })),
+                })),
+            },
+            P4Out::Warning(w) => Some(P4Out::Warning(w)),
+            P4Out::Info(i) => Some(P4Out::Info(i)),
+            P4Out::Failure(f) => Some(P4Out::Failure(f)),
+            P4Out::ParseError(e) => Some(P4Out::ParseError(e)),
         }
     }
 }

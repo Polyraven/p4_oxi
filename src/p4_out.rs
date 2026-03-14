@@ -45,9 +45,67 @@ pub struct Failure {
 }
 
 #[derive(Debug)]
-pub enum P4Out {
+pub enum P4Out<T> {
+    Content(T),
     Warning(WarningMessage),
     Info(InfoMessage),
     Failure(Failure),
     ParseError(ParseError),
+}
+
+impl<T> P4Out<T> {
+    pub fn is_content(&self) -> bool {
+        matches!(self, P4Out::Content(_))
+    }
+
+    pub fn is_warning(&self) -> bool {
+        matches!(self, P4Out::Warning(_))
+    }
+
+    pub fn is_info(&self) -> bool {
+        matches!(self, P4Out::Info(_))
+    }
+
+    pub fn is_failure(&self) -> bool {
+        matches!(self, P4Out::Failure(_))
+    }
+
+    pub fn is_parse_error(&self) -> bool {
+        matches!(self, P4Out::ParseError(_))
+    }
+
+    pub fn take_content(self) -> Option<T> {
+        match self {
+            P4Out::Content(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn take_warning(self) -> Option<WarningMessage> {
+        match self {
+            P4Out::Warning(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn take_info(self) -> Option<InfoMessage> {
+        match self {
+            P4Out::Info(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn take_failure(self) -> Option<Failure> {
+        match self {
+            P4Out::Failure(v) => Some(v),
+            _ => None,
+        }
+    }
+
+    pub fn take_parse_error(self) -> Option<ParseError> {
+        match self {
+            P4Out::ParseError(v) => Some(v),
+            _ => None,
+        }
+    }
 }
