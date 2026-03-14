@@ -16,7 +16,7 @@ use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 
 use crate::iter_cmd::RunningIterCmd;
-use crate::warnings::{Failure, InfoMessage, P4Message, ParseError, WarningMessage};
+use crate::p4_out::{Failure, InfoMessage, P4Out, ParseError, WarningMessage};
 
 /// An iterator over a running command that categorizes the output messages between content and warnings.
 ///
@@ -39,7 +39,7 @@ impl P4RunningCmd {
 }
 
 impl Iterator for P4RunningCmd {
-    type Item = Result<String, P4Message>;
+    type Item = Result<String, P4Out>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -48,14 +48,14 @@ impl Iterator for P4RunningCmd {
             };
 
             match value {
-                Err(e) => return Some(Err(P4Message::Failure(Failure { data: e }))),
+                Err(e) => return Some(Err(P4Out::Failure(Failure { data: e }))),
                 Ok(line) => {
                     if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(&line) {
-                        return Some(Err(P4Message::Warning(warning_message)));
+                        return Some(Err(P4Out::Warning(warning_message)));
                     }
 
                     if let Ok(info_message) = serde_json::from_str::<InfoMessage>(&line) {
-                        return Some(Err(P4Message::Info(info_message)));
+                        return Some(Err(P4Out::Info(info_message)));
                     }
 
                     return Some(Ok(line));
@@ -78,13 +78,13 @@ pub struct P4TypedRunningCmd<T> {
 }
 
 impl<T: DeserializeOwned> Iterator for P4TypedRunningCmd<T> {
-    type Item = Result<T, P4Message>;
+    type Item = Result<T, P4Out>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.inner_p4_running_cmd.next()? {
             Err(msg) => Some(Err(msg)),
             Ok(line) => Some(serde_json::from_str::<T>(&line).map_err(|e| {
-                P4Message::ParseError(ParseError {
+                P4Out::ParseError(ParseError {
                     data: line,
                     error: e.to_string(),
                 })

@@ -45,26 +45,9 @@ pub struct Failure {
 }
 
 #[derive(Debug)]
-pub enum P4Message {
-    Failure(Failure),
+pub enum P4Out {
     Warning(WarningMessage),
     Info(InfoMessage),
+    Failure(Failure),
     ParseError(ParseError),
-}
-
-pub trait P4Single<T> {
-    fn single(self) -> Result<T, String>;
-}
-
-impl<T> P4Single<T> for Vec<Result<T, P4Message>> {
-    fn single(self) -> Result<T, String> {
-        let count = self.len();
-        if count != 1 {
-            return Err(format!("The number of results is not one ({})", count));
-        }
-        self.into_iter()
-            .next()
-            .unwrap()
-            .map_err(|_| "Failed to get info from P4".to_string())
-    }
 }

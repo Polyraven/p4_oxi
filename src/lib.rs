@@ -7,6 +7,6 @@ mod global_options;
 mod iter_cmd;
 mod outputs;
 mod p4_cmd;
+mod p4_out;
 mod p4_running_cmd;
 pub mod prelude;
-mod warnings;

@@ -63,11 +63,12 @@ impl P4FStat {
     pub fn of_one(wildcard: &str) -> Self {
         Self {
             wildcards: vec![wildcard.to_string()],
+            max: Some(1),
             ..Default::default()
         }
     }
 
-    pub fn of_many(wildcards: Vec<&str>) -> Self {
+    pub fn of_many(wildcards: &[&str]) -> Self {
         Self {
             wildcards: wildcards.iter().map(|w| w.to_string()).collect(),
             ..Default::default()
@@ -76,11 +77,10 @@ impl P4FStat {
 }
 
 // Convinience functions:
-pub fn get_list_of_files(wildcards: Vec<&str>) -> Result<Vec<String>, String> {
+pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, String> {
     Ok(P4FStat::of_many(wildcards)
-        .execute()?
-        .iter()
-        .filter_map(|r| r.as_ref().ok())
-        .map(|r| r.clientFile.clone())
+        .run()?
+        .filter_map(|r| r.ok())
+        .map(|r| r.clientFile)
         .collect())
 }

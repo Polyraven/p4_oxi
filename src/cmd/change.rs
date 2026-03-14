@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     cmd::info::P4Info,
     p4_cmd::{P4Cmd, P4Specification},
-    prelude::P4Single,
 };
 
 #[allow(non_snake_case, dead_code)]
@@ -36,7 +35,7 @@ pub struct P4ChangelistSpec {
 
 impl P4ChangelistSpec {
     pub fn new(description: &str) -> Result<Box<Self>, String> {
-        let info = P4Info::default().execute()?.single()?;
+        let info = P4Info::default().single()?;
 
         Ok(Box::new(Self {
             Change: "new".to_string(),

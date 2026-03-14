@@ -25,7 +25,7 @@ fn check_p4_client_available_and_compatible() -> Result<(), String> {
 }
 
 fn check_connection() -> Result<(), String> {
-    P4Info::default().execute()?;
+    P4Info::default().single()?;
     // TODO: there is a bit more that can be done here,
     // running p4 info on itself does not mean that the client can run commands against the database.
     Ok(())

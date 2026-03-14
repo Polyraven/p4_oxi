@@ -5,8 +5,8 @@ use serde::de::DeserializeOwned;
 use crate::{
     global_options::GlobalOptions,
     iter_cmd::IterCmd,
+    p4_out::P4Out,
     p4_running_cmd::{P4RunningCmd, P4TypedRunningCmd},
-    warnings::P4Message,
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -17,7 +17,7 @@ use crate::{
 /// This struct is using the builder pattern where one would construct a command and than execute it.
 /// Example:
 /// ```ignore
-/// P4RawCmd::new("info").execute()?.single()
+/// P4RawCmd::new("info").run()?.single()
 ///```
 ///
 /// Different part of the command are set by individual functions.
@@ -25,10 +25,10 @@ use crate::{
 ///     P4RawCmd::new("fstat")
 ///     .wildcard(r"c:\my_workspace\my_directory\...")
 ///     .with_arg_value("-m", "5")
-///     .run()?.for_each(|fstat| {});
+///     .start()?.for_each(|fstat| {});
 ///```
 ///
-/// The `.run()?` here starts the executions and provides an iterator while p4 is still running.
+/// The `.start()?` here starts the executions and provides an iterator while p4 is still running.
 /// Thus providing effortless concurency without the need of threads.
 ///
 ///
@@ -97,6 +97,9 @@ impl P4RawCmd {
     /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
     /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
     /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
+    /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
+    /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
+    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
     pub fn run(self) -> Result<P4RunningCmd, String> {
         if self.input_sepcification.is_some() {
             return Err(
@@ -108,11 +111,6 @@ impl P4RawCmd {
         Ok(P4RunningCmd {
             inner_iter_cmd: iter_cmd,
         })
-    }
-
-    /// Convenience functions for runing casting and collecting the result of the command into a String.
-    pub fn execute(self) -> Result<Vec<Result<String, P4Message>>, String> {
-        Ok(self.run()?.cast::<String>().collect())
     }
 
     pub fn submit_spec(self) -> Result<String, String> {
@@ -153,11 +151,14 @@ pub trait P4Cmd {
         Ok(self.to_p4_query_cmd().run()?.cast())
     }
 
-    fn execute(&self) -> Result<Vec<Result<Self::Output, P4Message>>, String>
+    fn single(&self) -> Result<Self::Output, String>
     where
         Self::Output: DeserializeOwned,
     {
-        Ok(self.run()?.collect())
+        self.run()?
+            .next()
+            .ok_or_else(|| "Expected a single result but got none".to_string())?
+            .map_err(|e| format!("{:?}", e))
     }
 }
 
