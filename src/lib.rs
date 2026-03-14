@@ -2,11 +2,11 @@
 //! Mostly planned/intended to be used fro client side applications.
 
 mod check_connection;
-pub mod cmd;
-pub mod global_options;
-pub mod iter_cmd;
-pub mod outputs;
-pub mod p4_cmd;
+mod cmd;
+mod global_options;
+mod iter_cmd;
+mod outputs;
+mod p4_cmd;
 mod p4_running_cmd;
 pub mod prelude;
-pub mod warnings;
+mod warnings;
