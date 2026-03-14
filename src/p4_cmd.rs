@@ -18,7 +18,7 @@ use crate::{
 /// This struct is using the builder pattern where one would construct a command and than execute it.
 /// Example:
 /// ```ignore
-/// P4RawCmd::new("info").run()?.single()
+/// P4RawCmd::new("info").single_content()?
 ///```
 ///
 /// Different part of the command are set by individual functions.
@@ -26,7 +26,7 @@ use crate::{
 ///     P4RawCmd::new("fstat")
 ///     .wildcard(r"c:\my_workspace\my_directory\...")
 ///     .with_arg_value("-m", "5")
-///     .start()?.for_each(|fstat| {});
+///     .start()?.for_each(|_| {});
 ///```
 ///
 /// The `.start()?` here starts the executions and provides an iterator while p4 is still running.
@@ -154,7 +154,9 @@ pub trait P4Cmd {
         Ok(self.to_p4_query_cmd().run()?.cast())
     }
 
-    fn single(&self) -> Result<Self::Output, P4Error>
+    /// Returns the first item, expecting it to be Content.
+    /// Fails if the first item is a non-content message or if there are no results.
+    fn single_content(&self) -> Result<Self::Output, P4Error>
     where
         Self::Output: DeserializeOwned,
     {
@@ -163,6 +165,22 @@ pub trait P4Cmd {
             Some(other) => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
             None => Err(P4Error::NoResults),
         }
+    }
+
+    /// Skips Info and Warning messages, returning the first Content item.
+    /// Fails on Failure/ParseError, or if no Content is found.
+    fn first_content(&self) -> Result<Self::Output, P4Error>
+    where
+        Self::Output: DeserializeOwned,
+    {
+        for item in self.run()? {
+            match item {
+                P4Out::Content(v) => return Ok(v),
+                P4Out::Info(_) | P4Out::Warning(_) => continue,
+                other => return Err(P4Error::UnexpectedOutput(other.erase_content_type())),
+            }
+        }
+        Err(P4Error::NoResults)
     }
 }
 

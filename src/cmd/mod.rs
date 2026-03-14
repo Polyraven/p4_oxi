@@ -8,3 +8,7 @@
 pub mod change;
 pub mod fstat;
 pub mod info;
+
+pub use change::*;
+pub use fstat::*;
+pub use info::*;

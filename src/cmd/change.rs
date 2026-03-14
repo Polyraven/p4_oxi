@@ -36,7 +36,7 @@ pub struct P4ChangelistSpec {
 
 impl P4ChangelistSpec {
     pub fn new(description: &str) -> Result<Box<Self>, P4Error> {
-        let info = P4Info::default().single()?;
+        let info = P4Info::default().first_content()?;
 
         Ok(Box::new(Self {
             Change: "new".to_string(),

@@ -5,7 +5,7 @@
 
 use serde::Deserialize;
 
-use crate::prelude::*;
+use crate::*;
 
 #[derive(Default, Debug)]
 /// Argument builder for the fstat command.
@@ -76,11 +76,3 @@ impl P4FStat {
     }
 }
 
-// Convenience functions:
-pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, P4Error> {
-    Ok(P4FStat::of_many(wildcards)
-        .run()?
-        .filter_map(P4Out::take_content)
-        .map(|v| v.clientFile)
-        .collect())
-}

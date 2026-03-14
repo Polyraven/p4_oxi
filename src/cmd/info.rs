@@ -4,7 +4,7 @@
 
 use serde::Deserialize;
 
-use crate::prelude::*;
+use crate::*;
 
 #[derive(Default, Debug)]
 /// Argument builder for the info command.
