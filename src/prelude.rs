@@ -1,6 +1,7 @@
 //! Making it possible to have a single use and a full access
 
 pub use crate::check_connection::p4_can_run_commands;
+pub use crate::client_version::P4ClientVersion;
 pub use crate::error::P4Error;
 pub use crate::p4_cmd::{P4Cmd, P4RawCmd};
 pub use crate::p4_out::P4Out;
@@ -10,4 +11,3 @@ use crate::cmd::*;
 pub use change::*;
 pub use fstat::*;
 pub use info::*;
-pub use version::*;

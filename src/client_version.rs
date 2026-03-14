@@ -8,14 +8,10 @@ pub struct P4ClientVersion {
     pub minor: u32,
 }
 
-#[derive(Debug)]
-pub struct P4Version;
-
-impl P4Version {
-    pub fn execute(self) -> Result<P4ClientVersion, P4Error> {
-        //! Checks the local p4 client version by running `p4 -V`.
-        //! Does not require server connectivity.
-
+impl P4ClientVersion {
+    /// Checks the local p4 client version by running `p4 -V`.
+    /// Does not require server connectivity.
+    pub fn get() -> Result<Self, P4Error> {
         let output = Command::new("p4")
             .arg("-V")
             .output()
@@ -48,6 +44,6 @@ impl P4Version {
                 P4Error::ParseError(format!("Could not parse minor version from: {version_str}"))
             })?;
 
-        Ok(P4ClientVersion { major, minor })
+        Ok(Self { major, minor })
     }
 }

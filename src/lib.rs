@@ -2,6 +2,7 @@
 //! Mostly planned/intended to be used fro client side applications.
 
 mod check_connection;
+mod client_version;
 mod cmd;
 mod error;
 mod global_options;

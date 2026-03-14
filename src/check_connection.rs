@@ -1,5 +1,5 @@
+use crate::client_version::P4ClientVersion;
 use crate::cmd::info::P4Info;
-use crate::cmd::version::{P4ClientVersion, P4Version};
 use crate::error::P4Error;
 use crate::p4_cmd::P4Cmd;
 
@@ -9,7 +9,7 @@ const MIN_JSON_VERSION: P4ClientVersion = P4ClientVersion {
 };
 
 fn check_p4_client_available_and_compatible() -> Result<(), P4Error> {
-    let client_version = P4Version.execute()?;
+    let client_version = P4ClientVersion::get()?;
 
     if client_version.major > MIN_JSON_VERSION.major {
         return Ok(());
