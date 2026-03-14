@@ -11,7 +11,7 @@ pub enum ProcessingResult {
 }
 
 #[derive(Default)]
-pub struct HandledCmdOut {
+pub struct HandledCmdOutput {
     pub warnings: Vec<String>,
     pub content: Vec<String>,
 }
@@ -62,7 +62,7 @@ impl HandledCommand {
         self
     }
 
-    fn send_input(&mut self) -> Result<HandledCmdOut, String> {
+    fn send_input(&mut self) -> Result<HandledCmdOutput, String> {
         let pipe_result = Command::new("p4")
             .arg("change")
             .arg("-i")
@@ -86,7 +86,7 @@ impl HandledCommand {
         let output = pipe.wait_with_output().unwrap();
         if output.status.success() {
             let std_out = String::from_utf8_lossy(&output.stdout);
-            let mut result = HandledCmdOut::default();
+            let mut result = HandledCmdOutput::default();
             result.content.push(std_out.into_owned());
             return Ok(result);
         } else {
@@ -95,7 +95,7 @@ impl HandledCommand {
         }
     }
 
-    pub fn execute(&mut self) -> Result<HandledCmdOut, String> {
+    pub fn execute(&mut self) -> Result<HandledCmdOutput, String> {
         if self.input.is_some() {
             return self.send_input();
         }
@@ -115,7 +115,7 @@ impl HandledCommand {
             return Err("Failed to capture stdout!".to_string());
         };
 
-        let mut result = HandledCmdOut::default();
+        let mut result = HandledCmdOutput::default();
 
         for line in BufReader::new(stdout_handler)
             .lines()

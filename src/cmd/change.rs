@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cmd::info::P4Info,
-    p4cmd::{P4CmdArgs, ToP4InputSpec},
+    p4_cmd::{P4CmdArgs, P4Specification},
 };
 
 #[allow(non_snake_case, dead_code)]
@@ -47,7 +47,7 @@ impl P4ChangelistSpec {
     }
 }
 
-impl ToP4InputSpec for P4ChangelistSpec {
+impl P4Specification for P4ChangelistSpec {
     fn convert(&self) -> String {
         format!(
             "Change: {}\nClient: {}\nUser: {}\nStatus: {}\nDescription:\n\t{}\n",

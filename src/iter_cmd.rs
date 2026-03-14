@@ -38,7 +38,6 @@ impl IterCmd {
     pub fn new(command: impl AsRef<OsStr>) -> Self {
         Self {
             command: Command::new(command),
-            handler: None,
             input: None,
         }
     }
@@ -55,18 +54,13 @@ impl IterCmd {
         self
     }
 
-    pub fn set_handler(mut self, handler: Box<dyn Handler>) -> Self {
-        self.handler = Some(handler);
-        self
-    }
-
     pub fn set_input(mut self, input: String) -> Self {
         self.input = Some(input);
         self
     }
 
     /// Will send the input to the subprocess (used for sending Specs)
-    fn send_input(&mut self) -> Result<String, String> {
+    pub fn send_input(&mut self) -> Result<String, String> {
         let pipe_result = Command::new("p4")
             .arg("change")
             .arg("-i")
@@ -99,8 +93,11 @@ impl IterCmd {
 
     /// Starts the command and returns an iterator that can be lazily evaluated.
     pub fn run(&mut self) -> Result<RunningIterCmd, String> {
-        if self.input.is_some(){
-            return Err("Command has an input, it cannot be run as iterator!".to_string());
+        if self.input.is_some() {
+            return Err(
+                "Command has an input, it cannot be run as iterator! Use .send_input instead."
+                    .to_string(),
+            );
         }
 
         let pipe_result = self
@@ -141,7 +138,6 @@ impl IterCmd {
             self.run()?.collect()
         }
     }
-
 }
 
 impl RunningIterCmd {
@@ -162,7 +158,6 @@ impl Iterator for RunningIterCmd {
     type Item = Result<String, String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-
         if let Some(Ok(line)) = self.stdout.next() {
             Some(Ok(line))
         } else if let Some(Ok(line)) = self.stderr.next() {
@@ -176,14 +171,11 @@ impl Iterator for RunningIterCmd {
         } else {
             None
         }
-
     }
 }
 
 impl Drop for RunningIterCmd {
-
     fn drop(&mut self) {
         let _ = self.pipe.kill();
     }
-
 }

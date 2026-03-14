@@ -8,3 +8,4 @@
 pub mod change;
 pub mod fstat;
 pub mod info;
+pub mod version;

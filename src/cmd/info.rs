@@ -23,6 +23,8 @@ pub struct P4InfoOut {
     pub clientStream: String,
     pub serverAddress: String,
     pub userName: String,
+    pub serverVersion: Option<String>,
+    pub clientVersion: Option<String>,
     // Fixme: not complete
 }
 
@@ -35,9 +37,5 @@ impl P4CmdArgs<P4InfoOut> for P4Info {
         };
 
         p4_cmd
-    }
-
-    fn execute(self) -> Result<P4InfoOut, String> {
-        self.to_p4_cmd().execute()?.parse()?.single()
     }
 }

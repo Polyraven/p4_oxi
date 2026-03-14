@@ -54,10 +54,6 @@ impl P4CmdArgs<Vec<P4FStatOut>> for P4FStat {
 
         p4_cmd
     }
-
-    fn execute(self) -> Result<Vec<P4FStatOut>, String> {
-        self.to_p4_cmd().execute()?.parse()
-    }
 }
 
 // Constructors

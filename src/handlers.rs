@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use serde::de::DeserializeOwned;
 
 use crate::{
-    handled_command::{HandledCmdOut, Handler, ProcessingResult},
+    handled_command::{HandledCmdOutput, Handler, ProcessingResult},
     warnings::{InfoMessage, WarningMessage},
 };
 
@@ -106,7 +106,7 @@ impl<T: DeserializeOwned> OutHandler for DeserializingHandler<T> {
     }
 }
 
-impl<T: DeserializeOwned> P4OutputParsing<T> for HandledCmdOut {
+impl<T: DeserializeOwned> P4OutputParsing<T> for HandledCmdOutput {
     fn parse(self) -> Result<Vec<T>, String> {
         let mut result: Vec<T> = Vec::new();
         for content_value in self.content {

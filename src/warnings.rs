@@ -10,12 +10,11 @@ use serde::Deserialize;
 /// These messages still let p4 continue it's execution.
 /// But listening to these gives the oportunity to react to these.
 /// Thus is why this implementation listen to these in the handler
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct WarningMessage {
     /// will contain the wildcard and the reason in failed
     pub data: String,
-    /// the furnction of this is unknown
+    /// the function of this is unknown
     pub generic: i32,
     /// irrelevant to us (actually severity 3 means it could not run)
     pub severity: i32,
@@ -28,9 +27,27 @@ impl WarningMessage {}
 /// {"data":"<file_path> - must resolve #3 before submitting","level":1}
 /// ```
 /// There is an option to register a handler for these as well
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct InfoMessage {
     pub data: String,
     pub level: i32,
+}
+
+#[derive(Debug)]
+pub struct ParseError {
+    pub data: String,
+    pub error: String,
+}
+
+#[derive(Debug)]
+pub struct Failure {
+    pub data: String,
+}
+
+#[derive(Debug)]
+pub enum P4Message {
+    Failure(Failure),
+    Warning(WarningMessage),
+    Info(InfoMessage),
+    ParseError(ParseError),
 }
