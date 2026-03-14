@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cmd::info::P4Info,
+    error::P4OxiError,
     p4_cmd::{P4Cmd, P4Specification},
 };
 
@@ -34,10 +35,8 @@ pub struct P4ChangelistSpec {
 }
 
 impl P4ChangelistSpec {
-    pub fn new(description: &str) -> Result<Box<Self>, String> {
-        let Some(info) = P4Info::default().single()?.take_content() else {
-            return Err("No Info received".to_string());
-        };
+    pub fn new(description: &str) -> Result<Box<Self>, P4OxiError> {
+        let info = P4Info::default().single_content()?;
 
         Ok(Box::new(Self {
             Change: "new".to_string(),

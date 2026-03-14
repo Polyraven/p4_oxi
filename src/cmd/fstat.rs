@@ -76,11 +76,11 @@ impl P4FStat {
     }
 }
 
-// Convinience functions:
-pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, String> {
+// Convenience functions:
+pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, P4OxiError> {
     Ok(P4FStat::of_many(wildcards)
         .run()?
-        .filter_map(|v| v.take_content())
+        .filter_map(P4Out::take_content)
         .map(|v| v.clientFile)
         .collect())
 }

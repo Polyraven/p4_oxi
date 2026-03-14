@@ -108,4 +108,15 @@ impl<T> P4Out<T> {
             _ => None,
         }
     }
+
+    /// Discards the content type, used when storing non-content variants in [`P4Error`].
+    pub fn erase_content_type(self) -> P4Out<()> {
+        match self {
+            P4Out::Content(_) => P4Out::Content(()),
+            P4Out::Warning(w) => P4Out::Warning(w),
+            P4Out::Info(i) => P4Out::Info(i),
+            P4Out::Failure(f) => P4Out::Failure(f),
+            P4Out::ParseError(e) => P4Out::ParseError(e),
+        }
+    }
 }

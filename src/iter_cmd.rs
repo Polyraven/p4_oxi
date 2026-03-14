@@ -3,6 +3,8 @@ use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{Child, ChildStderr, ChildStdout, Command, Stdio};
 
+use crate::error::P4OxiError;
+
 /// Holds the command arguments and the handlers that will be ran on each output in real time.
 pub struct IterCmd {
     // The Command instance that will be executed in a piped subprocess.
@@ -45,7 +47,7 @@ impl IterCmd {
     }
 
     /// Will send the input to the subprocess (used for sending Specs)
-    pub fn send_input(&mut self) -> Result<String, String> {
+    pub fn send_input(&mut self) -> Result<String, P4OxiError> {
         let pipe_result = Command::new("p4")
             .arg("change")
             .arg("-i")
@@ -55,7 +57,11 @@ impl IterCmd {
             .spawn();
 
         let mut pipe = match pipe_result {
-            Err(e) => return Err(format!("Failed to execute command: {}", e)),
+            Err(e) => {
+                return Err(P4OxiError::ProcessError(format!(
+                    "Failed to execute command: {e}"
+                )));
+            }
             Ok(pipe) => pipe,
         };
 
@@ -69,20 +75,21 @@ impl IterCmd {
         let output = pipe.wait_with_output().unwrap();
         if output.status.success() {
             let std_out = String::from_utf8_lossy(&output.stdout);
-            return Ok(std_out.into_owned());
+            Ok(std_out.into_owned())
         } else {
             let std_err = String::from_utf8_lossy(&output.stderr);
-            return Err(format!("Failed to write stdin: {}", std_err.to_owned()));
+            Err(P4OxiError::ProcessError(format!(
+                "Failed to write stdin: {std_err}"
+            )))
         }
     }
 
     /// Starts the command and returns an iterator that can be lazily evaluated.
-    pub fn run(&mut self) -> Result<RunningIterCmd, String> {
+    pub fn run(&mut self) -> Result<RunningIterCmd, P4OxiError> {
         if self.input.is_some() {
-            return Err(
-                "Command has an input, it cannot be run as iterator! Use .send_input instead."
-                    .to_string(),
-            );
+            return Err(P4OxiError::InvalidUsage(
+                "Command has an input, it cannot be run as iterator! Use .send_input instead.",
+            ));
         }
 
         let pipe_result = self
@@ -92,16 +99,24 @@ impl IterCmd {
             .spawn();
 
         let mut pipe = match pipe_result {
-            Err(e) => return Err(format!("Failed to execute command: {}", e)),
+            Err(e) => {
+                return Err(P4OxiError::ProcessError(format!(
+                    "Failed to spawn process: {e}"
+                )));
+            }
             Ok(pipe) => pipe,
         };
 
         let Some(stdout_handler) = pipe.stdout.take() else {
-            return Err("Failed to capture stdout!".to_string());
+            return Err(P4OxiError::ProcessError(
+                "Failed to capture stdout".to_string(),
+            ));
         };
 
         let Some(stderr_handler) = pipe.stderr.take() else {
-            return Err("Failed to capture stderr".to_string());
+            return Err(P4OxiError::ProcessError(
+                "Failed to capture stderr".to_string(),
+            ));
         };
 
         Ok(RunningIterCmd {
@@ -114,15 +129,19 @@ impl IterCmd {
 }
 
 impl RunningIterCmd {
-    pub fn wait(&mut self) -> Result<(), String> {
+    pub fn wait(&mut self) -> Result<(), P4OxiError> {
         let Ok(exit_status) = self.pipe.wait() else {
-            return Err("Failed to wait on process (no exit_status received)".to_string());
+            return Err(P4OxiError::ProcessError(
+                "Failed to wait on process (no exit_status received)".to_string(),
+            ));
         };
 
         if !exit_status.success() {
-            return Err(format!("Process exited with status: {:?}", exit_status));
+            Err(P4OxiError::ProcessError(format!(
+                "Process exited with status: {exit_status:?}"
+            )))
         } else {
-            return Ok(());
+            Ok(())
         }
     }
 }
@@ -139,7 +158,7 @@ impl Iterator for RunningIterCmd {
             self.end_reached = true;
             match self.wait() {
                 Ok(()) => None,
-                Err(err) => Some(Err(err)),
+                Err(err) => Some(Err(err.to_string())),
             }
         } else {
             None

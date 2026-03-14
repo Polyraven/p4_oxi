@@ -3,6 +3,7 @@
 
 mod check_connection;
 mod cmd;
+mod error;
 mod global_options;
 mod iter_cmd;
 mod outputs;
