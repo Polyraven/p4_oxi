@@ -1,5 +1,5 @@
-- [ ] Rename `P4Message` to `P4Error`, unified error type for the whole crate, replacing the current mix of `String` and `P4Message` errors
-- [ ] Implement `Display` and `std::error::Error` for `P4Error` manually, no `thiserror` dependency
+- [x] Rename `P4Message` to `P4Out<T>` (categorized server output) and introduce `P4Error` (crate-level errors), replacing the `String` error type everywhere
+- [x] Implement `Display` and `std::error::Error` for `P4Error` manually, no `thiserror` dependency
 - [x] Split `P4CmdArgs` into `P4Cmd` trait (query commands) and `P4SpecCmd` trait (spec submission), add `single()` blanket impl on `P4Cmd` so `P4Info` and similar don't need a separate wrapper
 - [x] Remove `P4Single` from `warnings.rs`, replaced by `single()` on `P4Cmd` trait
 - [ ] Move `FileAction` and `Workspace` out of `outputs.rs` into their respective command files when those commands are implemented, then delete `outputs.rs`

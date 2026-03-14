@@ -77,7 +77,7 @@ impl P4FStat {
 }
 
 // Convenience functions:
-pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, P4OxiError> {
+pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, P4Error> {
     Ok(P4FStat::of_many(wildcards)
         .run()?
         .filter_map(P4Out::take_content)

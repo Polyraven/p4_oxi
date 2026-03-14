@@ -10,7 +10,7 @@ use crate::p4_out::P4Out;
 /// and are yielded during iteration. `P4Error` covers everything that prevents
 /// iteration from happening at all.
 #[derive(Debug)]
-pub enum P4OxiError {
+pub enum P4Error {
     /// Failed to spawn the p4 process or encountered an IO error.
     ProcessError(String),
     /// The API was used incorrectly (e.g. calling `.run()` when an input spec is set).
@@ -25,17 +25,17 @@ pub enum P4OxiError {
     VersionMismatch(String),
 }
 
-impl fmt::Display for P4OxiError {
+impl fmt::Display for P4Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            P4OxiError::ProcessError(msg) => write!(f, "process error: {msg}"),
-            P4OxiError::InvalidUsage(msg) => write!(f, "invalid usage: {msg}"),
-            P4OxiError::NoResults => write!(f, "expected a result but got none"),
-            P4OxiError::UnexpectedOutput(out) => write!(f, "unexpected output: {out:?}"),
-            P4OxiError::ParseError(msg) => write!(f, "parse error: {msg}"),
-            P4OxiError::VersionMismatch(msg) => write!(f, "version mismatch: {msg}"),
+            P4Error::ProcessError(msg) => write!(f, "p4-oxi: process error: {msg}"),
+            P4Error::InvalidUsage(msg) => write!(f, "p4-oxi: invalid usage: {msg}"),
+            P4Error::NoResults => write!(f, "p4-oxi: expected a result but got none"),
+            P4Error::UnexpectedOutput(out) => write!(f, "p4-oxi: unexpected output: {out:?}"),
+            P4Error::ParseError(msg) => write!(f, "p4-oxi: parse error: {msg}"),
+            P4Error::VersionMismatch(msg) => write!(f, "p4-oxi: version mismatch: {msg}"),
         }
     }
 }
 
-impl std::error::Error for P4OxiError {}
+impl std::error::Error for P4Error {}

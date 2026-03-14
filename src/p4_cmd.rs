@@ -3,7 +3,7 @@
 use serde::de::DeserializeOwned;
 
 use crate::{
-    error::P4OxiError,
+    error::P4Error,
     global_options::GlobalOptions,
     iter_cmd::IterCmd,
     p4_out::P4Out,
@@ -101,9 +101,9 @@ impl P4RawCmd {
     /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
     /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
     /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
-    pub fn run(self) -> Result<P4RunningCmd, P4OxiError> {
+    pub fn run(self) -> Result<P4RunningCmd, P4Error> {
         if self.input_sepcification.is_some() {
-            return Err(P4OxiError::InvalidUsage(
+            return Err(P4Error::InvalidUsage(
                 "A command cannot be called when input_spec is set (unintended misuse? For uploading specs call .submit_spec())",
             ));
         }
@@ -114,9 +114,9 @@ impl P4RawCmd {
         })
     }
 
-    pub fn submit_spec(self) -> Result<String, P4OxiError> {
+    pub fn submit_spec(self) -> Result<String, P4Error> {
         if self.input_sepcification.is_none() {
-            return Err(P4OxiError::InvalidUsage(
+            return Err(P4Error::InvalidUsage(
                 ".submit_spec() was called while the specification is empty.",
             ));
         }
@@ -147,28 +147,21 @@ pub trait P4Cmd {
 
     fn to_p4_query_cmd(&self) -> P4RawCmd;
 
-    fn run(&self) -> Result<P4TypedRunningCmd<Self::Output>, P4OxiError>
+    fn run(&self) -> Result<P4TypedRunningCmd<Self::Output>, P4Error>
     where
         Self::Output: DeserializeOwned,
     {
         Ok(self.to_p4_query_cmd().run()?.cast())
     }
 
-    fn single(&self) -> Result<P4Out<Self::Output>, P4OxiError>
-    where
-        Self::Output: DeserializeOwned,
-    {
-        self.run()?.next().ok_or(P4OxiError::NoResults)
-    }
-
-    fn single_content(&self) -> Result<Self::Output, P4OxiError>
+    fn single(&self) -> Result<Self::Output, P4Error>
     where
         Self::Output: DeserializeOwned,
     {
         match self.run()?.next() {
             Some(P4Out::Content(v)) => Ok(v),
-            Some(other) => Err(P4OxiError::UnexpectedOutput(other.erase_content_type())),
-            None => Err(P4OxiError::NoResults),
+            Some(other) => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
+            None => Err(P4Error::NoResults),
         }
     }
 }
@@ -178,7 +171,7 @@ pub trait P4SpecCmd {
 
     fn to_p4_spec_submit_cmd(&self) -> P4RawCmd;
 
-    fn submit_spec(&self, spec: Box<dyn P4Specification>) -> Result<String, P4OxiError> {
+    fn submit_spec(&self, spec: Box<dyn P4Specification>) -> Result<String, P4Error> {
         self.to_p4_spec_submit_cmd()
             .with_input_spec(spec)
             .submit_spec()
