@@ -42,11 +42,11 @@ pub struct P4FStatOut {
     // Fixme: not complete
 }
 
-impl P4CmdArgs for P4FStat {
+impl P4Cmd for P4FStat {
     type Output = P4FStatOut;
 
-    fn to_p4_cmd(&self) -> P4Cmd {
-        let mut p4_cmd = P4Cmd::raw("fstat");
+    fn to_p4_query_cmd(&self) -> P4RawCmd {
+        let mut p4_cmd = P4RawCmd::new("fstat");
 
         if let Some(v) = self.max {
             p4_cmd = p4_cmd.with_arg_value("-m", v.to_string());

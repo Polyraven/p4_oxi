@@ -1,0 +1,7 @@
+- [ ] Rename `P4Message` to `P4Error`, unified error type for the whole crate, replacing the current mix of `String` and `P4Message` errors
+- [ ] Implement `Display` and `std::error::Error` for `P4Error` manually, no `thiserror` dependency
+- [ ] Split `P4CmdArgs`, separate `P4CmdExecute` (multi-result) and `P4CmdExecuteSingle` (single-result) traits so `P4Info` and similar don't need `.single()` at the call site
+- [ ] Move `P4Single` out of `warnings.rs`, either into the new trait or a `util.rs`, decide once the trait split is done
+- [ ] Move `FileAction` and `Workspace` out of `outputs.rs` into their respective command files when those commands are implemented, then delete `outputs.rs`
+- [ ] Implement more commands, `p4 dirs`, `p4 files`, `p4 edit`, `p4 add` as minimum for the CLI tool
+- [ ] Start `p4-oxi-tui`, the interactive CLI tool using `inquire` or something similar, MVP being add files to a changelist with context persistence

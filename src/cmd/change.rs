@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     cmd::info::P4Info,
-    p4_cmd::{P4CmdArgs, P4Specification},
+    p4_cmd::{P4Cmd, P4Specification},
     prelude::P4Single,
 };
 

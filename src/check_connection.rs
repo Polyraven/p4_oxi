@@ -1,6 +1,6 @@
 use crate::cmd::info::P4Info;
 use crate::cmd::version::{P4ClientVersion, P4Version};
-use crate::p4_cmd::P4CmdArgs;
+use crate::p4_cmd::P4Cmd;
 
 const MIN_JSON_VERSION: P4ClientVersion = P4ClientVersion {
     major: 2016,

@@ -28,11 +28,11 @@ pub struct P4InfoOut {
     // Fixme: not complete
 }
 
-impl P4CmdArgs for P4Info {
+impl P4Cmd for P4Info {
     type Output = P4InfoOut;
 
-    fn to_p4_cmd(&self) -> P4Cmd {
-        let mut p4_cmd = P4Cmd::raw("info");
+    fn to_p4_query_cmd(&self) -> P4RawCmd {
+        let mut p4_cmd = P4RawCmd::new("info");
 
         if self.shortened {
             p4_cmd = p4_cmd.with_arg("-s");

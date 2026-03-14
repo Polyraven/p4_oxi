@@ -1,14 +1,35 @@
+//! Defines the various command runners which is using the typestate decorator pattern.
+//!
+//! Here us what's happening
+//! When .run() is called on a P4RawCmd it first creates an IterCmd
+//!
+//! The full chain:
+//!     RunningIterCmd -> P4RunningCmd -> P4TypedRunningCmd
+//!
+//! How it works:
+//! The RunningIterCmd outputs raw data without any processing.
+//! The P4RunningCmd splits the content from warnings (which are returned as P4Message) # TODO rename it to P4Error
+//! The P4TypedRunningCmd can be created from this using the .cast() method
+//! That in the end will make each content to be deserialized to a concrete type.
+
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 
 use crate::iter_cmd::RunningIterCmd;
 use crate::warnings::{Failure, InfoMessage, P4Message, ParseError, WarningMessage};
 
+/// An iterator over a running command that categorizes the output messages between content and warnings.
+///
+/// It emits Result<String, P4Message>
+/// Where:
+///     String: content in raw format
+///     P4Message: warnings and various error messages
 pub struct P4RunningCmd {
     pub inner_iter_cmd: RunningIterCmd,
 }
 
 impl P4RunningCmd {
+    /// Convert to P4TypedRunningCmd that will be able to deserialize each output to the specified type.
     pub fn cast<T>(self) -> P4TypedRunningCmd<T> {
         P4TypedRunningCmd {
             inner_p4_running_cmd: self,
@@ -44,6 +65,13 @@ impl Iterator for P4RunningCmd {
     }
 }
 
+/// A type bound iterator over a running command that deserializes each output to the type it is bound to.
+///
+/// It emits Result<T, P4Message>
+/// Where:
+///     - T is the successfully deserialized content
+///     - P4Message warnings and various error messages
+///
 pub struct P4TypedRunningCmd<T> {
     inner_p4_running_cmd: P4RunningCmd,
     _phantom: PhantomData<T>,

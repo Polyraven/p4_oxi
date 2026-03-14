@@ -1,4 +1,4 @@
-//! General wrapper around P4 CLI commands.
+//! Defines core traits and a general wrapper around P4 commands that the whole command system in this crate is built on..
 
 use serde::de::DeserializeOwned;
 
@@ -11,23 +11,31 @@ use crate::{
 
 /// A General low-level wrapper around P4 CLI commands.
 ///
-/// While to the CLI we would send one line full with arguments,
-/// This here splits up those to logical pieces.
-/// Other methods in this library use this struct for executing their commands.
+/// Other high level commands in the end convert to this.
+/// This here meant to be able to help run any command which is not or only partially implemented in .cmd
 ///
-///
+/// This struct is using the builder pattern where one would construct a command and than execute it.
 /// Example:
 /// ```ignore
-///     P4Cmd::new("fstat")
-///     .wildcard(r"c:\my_workspace\my_directory\...")
-///     .execute()
-///     .unwrap();
+/// P4RawCmd::new("info").execute()?.single()
 ///```
+///
+/// Different part of the command are set by individual functions.
+/// ```ignore
+///     P4RawCmd::new("fstat")
+///     .wildcard(r"c:\my_workspace\my_directory\...")
+///     .with_arg_value("-m", "5")
+///     .run()?.for_each(|fstat| {});
+///```
+///
+/// The `.run()?` here starts the executions and provides an iterator while p4 is still running.
+/// Thus providing effortless concurency without the need of threads.
+///
 ///
 /// CmdRef documentation:
 /// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html
 #[derive(Default)]
-pub struct P4Cmd {
+pub struct P4RawCmd {
     pub g_option: GlobalOptions,
     /// The P4 command that will be executed, like fstat, sync, clean etc.
     pub cmd: String,
@@ -39,9 +47,9 @@ pub struct P4Cmd {
     pub input_sepcification: Option<Box<dyn P4Specification>>,
 }
 
-impl P4Cmd {
-    pub fn raw(cmd: &str) -> Self {
-        P4Cmd {
+impl P4RawCmd {
+    pub fn new(cmd: &str) -> Self {
+        P4RawCmd {
             cmd: cmd.to_string(),
             ..Default::default()
         }
@@ -86,6 +94,9 @@ impl P4Cmd {
         self
     }
 
+    /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
+    /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
+    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
     pub fn run(self) -> Result<P4RunningCmd, String> {
         if self.input_sepcification.is_some() {
             return Err(
@@ -99,19 +110,24 @@ impl P4Cmd {
         })
     }
 
+    /// Convenience functions for runing casting and collecting the result of the command into a String.
     pub fn execute(self) -> Result<Vec<Result<String, P4Message>>, String> {
         Ok(self.run()?.cast::<String>().collect())
     }
 
     pub fn submit_spec(self) -> Result<String, String> {
+        if self.input_sepcification.is_none() {
+            return Err(".submit_spec() was called while the specification is empty.".to_string());
+        }
+
         // returns the raw data for now, but the Specification should implement what this returns.
         // Also note thet send_input will use change now right away.
         IterCmd::from(self).send_input()
     }
 }
 
-impl From<P4Cmd> for IterCmd {
-    fn from(p4_cmd: P4Cmd) -> Self {
+impl From<P4RawCmd> for IterCmd {
+    fn from(p4_cmd: P4RawCmd) -> Self {
         let mut cmd = IterCmd::new("p4")
             .args(&p4_cmd.g_option.to_arg_list())
             .arg(&p4_cmd.cmd)
@@ -125,16 +141,16 @@ impl From<P4Cmd> for IterCmd {
     }
 }
 
-pub trait P4CmdArgs {
+pub trait P4Cmd {
     type Output;
 
-    fn to_p4_cmd(&self) -> P4Cmd;
+    fn to_p4_query_cmd(&self) -> P4RawCmd;
 
     fn run(&self) -> Result<P4TypedRunningCmd<Self::Output>, String>
     where
         Self::Output: DeserializeOwned,
     {
-        Ok(self.to_p4_cmd().run()?.cast())
+        Ok(self.to_p4_query_cmd().run()?.cast())
     }
 
     fn execute(&self) -> Result<Vec<Result<Self::Output, P4Message>>, String>
@@ -143,12 +159,21 @@ pub trait P4CmdArgs {
     {
         Ok(self.run()?.collect())
     }
+}
 
-    fn submit_spec(&self) -> Result<String, String> {
-        self.to_p4_cmd().submit_spec()
+pub trait P4SpecCmd {
+    type Output;
+
+    fn to_p4_spec_submit_cmd(&self) -> P4RawCmd;
+
+    fn submit_spec(&self, spec: Box<dyn P4Specification>) -> Result<String, String> {
+        self.to_p4_spec_submit_cmd()
+            .with_input_spec(spec)
+            .submit_spec()
     }
 }
 
+/// A trait for structures that hold P4 Specs and need to be converted to the CLI commands.
 pub trait P4Specification {
     fn convert(&self) -> String;
 }
