@@ -2,28 +2,12 @@ use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{Child, ChildStderr, ChildStdout, Command, Stdio};
 
-pub enum ProcessingResult {
-    Warning(String),
-    Content(String),
-    Silent,
-}
-
 /// Holds the command arguments and the handlers that will be ran on each output in real time.
 pub struct IterCmd {
     // The Command instance that will be executed in a piped subprocess.
     command: Command,
     // If set than this will be sent to stdin when send or execute is called.
     input: Option<String>,
-}
-
-#[derive(Default)]
-pub struct CmdOut {
-    pub warning: String,
-    pub content: String,
-}
-
-pub trait Handler {
-    fn process(&mut self, value: &String) -> Result<ProcessingResult, String>;
 }
 
 pub struct RunningIterCmd {
@@ -127,17 +111,6 @@ impl IterCmd {
         })
     }
 
-    /// Evaluates the command in one go and returns the collected output.
-    pub fn execute(&mut self) -> Result<Vec<String>, String> {
-        if self.input.is_some() {
-            match self.send_input() {
-                Err(err) => Err(err),
-                Ok(v) => Ok(vec![v]),
-            }
-        } else {
-            self.run()?.collect()
-        }
-    }
 }
 
 impl RunningIterCmd {

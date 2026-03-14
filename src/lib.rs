@@ -4,8 +4,6 @@
 mod check_connection;
 pub mod cmd;
 pub mod global_options;
-mod handled_command;
-pub mod handlers;
 pub mod iter_cmd;
 pub mod outputs;
 pub mod p4_cmd;

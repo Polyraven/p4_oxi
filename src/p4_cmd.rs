@@ -4,8 +4,6 @@ use serde::de::DeserializeOwned;
 
 use crate::{
     global_options::GlobalOptions,
-    handled_command::HandledCommand,
-    handlers::{InfoHandler, OutHandler, P4CmdHandlers, WarningHandler},
     iter_cmd::IterCmd,
     p4_running_cmd::{P4RunningCmd, P4TypedRunningCmd},
     warnings::P4Message,
@@ -17,7 +15,6 @@ use crate::{
 /// This here splits up those to logical pieces.
 /// Other methods in this library use this struct for executing their commands.
 ///
-/// The handlers used in here are also going to be called during command execution, not after.
 ///
 /// Example:
 /// ```ignore
@@ -38,8 +35,6 @@ pub struct P4Cmd {
     pub args: Vec<String>,
     /// Last argument, needs special validation
     pub wildcards: Vec<String>,
-    /// All output message will go throug this
-    pub handler: P4CmdHandlers,
     /// Used when creating a changelist or a stream etc. by feeding the bytes in with stdin.
     pub input_sepcification: Option<Box<dyn P4Specification>>,
 }
@@ -85,21 +80,6 @@ impl P4Cmd {
         self
     }
 
-    pub fn warning_handler(mut self, handler: Box<dyn WarningHandler>) -> Self {
-        self.handler.warning_handlers.push(handler);
-        self
-    }
-
-    pub fn info_handler(mut self, handler: Box<dyn InfoHandler>) -> Self {
-        self.handler.info_handlers.push(handler);
-        self
-    }
-
-    pub fn with_output_handler(mut self, handler: Box<dyn OutHandler>) -> Self {
-        self.handler.output_handlers.push(handler);
-        self
-    }
-
     pub fn with_input_spec(mut self, input_spec: Box<dyn P4Specification>) -> Self {
         self.g_option.format_as_json = false;
         self.input_sepcification = Some(input_spec);
@@ -127,23 +107,6 @@ impl P4Cmd {
         // returns the raw data for now, but the Specification should implement what this returns.
         // Also note thet send_input will use change now right away.
         IterCmd::from(self).send_input()
-    }
-}
-
-impl From<P4Cmd> for HandledCommand {
-    fn from(p4_cmd: P4Cmd) -> HandledCommand {
-        let mut cmd = HandledCommand::new("p4")
-            .args(&p4_cmd.g_option.to_arg_list())
-            .arg(&p4_cmd.cmd)
-            .args(&p4_cmd.args)
-            .args(&p4_cmd.wildcards)
-            .set_handler(Box::new(p4_cmd.handler));
-
-        if p4_cmd.input_sepcification.is_some() {
-            cmd = cmd.set_input(p4_cmd.input_sepcification.unwrap().convert());
-        }
-
-        cmd
     }
 }
 
