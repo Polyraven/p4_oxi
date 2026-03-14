@@ -28,16 +28,18 @@ pub struct P4InfoOut {
     // Fixme: not complete
 }
 
-impl P4Cmd for P4Info {
-    type Output = P4InfoOut;
-
-    fn to_p4_query_cmd(&self) -> P4RawCmd {
+impl From<P4Info> for P4RawCmd {
+    fn from(value: P4Info) -> Self {
         let mut p4_cmd = P4RawCmd::new("info");
 
-        if self.shortened {
+        if value.shortened {
             p4_cmd = p4_cmd.with_arg("-s");
         };
 
         p4_cmd
     }
+}
+
+impl P4Cmd for P4Info {
+    type Output = P4InfoOut;
 }

@@ -46,11 +46,10 @@ impl IterCmd {
         self
     }
 
-    /// Will send the input to the subprocess (used for sending Specs)
+    /// Will send the input to the subprocess (used for sending Forms)
     pub fn send_input(&mut self) -> Result<String, P4Error> {
-        let pipe_result = Command::new("p4")
-            .arg("change")
-            .arg("-i")
+        let pipe_result = self
+            .command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

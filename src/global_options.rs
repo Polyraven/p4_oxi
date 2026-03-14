@@ -15,7 +15,7 @@
 /// Structure to hold the g-options in a human readable way.
 pub struct GlobalOptions {
     /// If this is not set to true, this library won't be able to deserialize the returned values/
-    /// There is still benefit in running without this, for example when sending a spec./
+    /// There is still benefit in running without this, for example when sending a form./
     /// The value of this is handled automatically in most cases.
     pub format_as_json: bool,
     // TODO: list is not exhaustive

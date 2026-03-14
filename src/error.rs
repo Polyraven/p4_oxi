@@ -13,7 +13,7 @@ use crate::p4_out::P4Out;
 pub enum P4Error {
     /// Failed to spawn the p4 process or encountered an IO error.
     ProcessError(String),
-    /// The API was used incorrectly (e.g. calling `.run()` when an input spec is set).
+    /// The API was used incorrectly (e.g. calling `.run()` when an input form is set).
     InvalidUsage(&'static str),
     /// A command that expected at least one result got none.
     NoResults,

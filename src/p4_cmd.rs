@@ -1,6 +1,7 @@
 //! Defines core traits and a general wrapper around P4 commands that the whole command system in this crate is built on..
 
 use serde::de::DeserializeOwned;
+use std::fmt::Debug;
 
 use crate::{
     error::P4Error,
@@ -45,7 +46,29 @@ pub struct P4RawCmd {
     /// Last argument, needs special validation
     pub wildcards: Vec<String>,
     /// Used when creating a changelist or a stream etc. by feeding the bytes in with stdin.
-    pub input_sepcification: Option<Box<dyn P4Specification>>,
+    pub form: Option<Box<dyn P4Form>>,
+    ///
+    pub form_action: P4FormAction,
+}
+
+#[derive(Default)]
+pub enum P4FormAction {
+    #[default]
+    None,
+    Submit,
+    Read,
+}
+
+/// When dealing with forms they need to be uploaded or downloaded with specific flags.
+/// This ensures those are set properly.
+impl P4FormAction {
+    fn to_arg_list(&self) -> Vec<String> {
+        match self {
+            P4FormAction::None => vec![],
+            P4FormAction::Read => vec!["-o".to_string()],
+            P4FormAction::Submit => vec!["-i".to_string()],
+        }
+    }
 }
 
 impl P4RawCmd {
@@ -89,22 +112,35 @@ impl P4RawCmd {
         self
     }
 
-    pub fn with_input_spec(mut self, input_spec: Box<dyn P4Specification>) -> Self {
+    pub fn with_submit_form(mut self, form: Box<dyn P4Form>) -> Self {
+        self.form_action = P4FormAction::Submit;
+        self.form = Some(form);
         self.g_option.format_as_json = false;
-        self.input_sepcification = Some(input_spec);
+        self
+    }
+
+    pub fn with_read_form(mut self) -> Self {
+        self.form_action = P4FormAction::Read;
+        self.form = None;
+        self.g_option.format_as_json = true;
+        self
+    }
+
+    /// This is the default state, no need to call it unless mutating an existing command.
+    pub fn with_no_form_action(mut self) -> Self {
+        self.form_action = P4FormAction::None;
+        self.form = None;
+        self.g_option.format_as_json = true;
         self
     }
 
     /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
     /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
-    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
-    /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
-    /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
-    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4SpecCmd traits already do with the output type specified.
+    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4FormCmd traits already do with the output type specified.
     pub fn run(self) -> Result<P4RunningCmd, P4Error> {
-        if self.input_sepcification.is_some() {
+        if self.form.is_some() || matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
-                "A command cannot be called when input_spec is set (unintended misuse? For uploading specs call .submit_spec())",
+                "A command cannot be run() when input_form is set (unintended misuse? For uploading forms call .submit_form())",
             ));
         }
 
@@ -114,15 +150,21 @@ impl P4RawCmd {
         })
     }
 
-    pub fn submit_spec(self) -> Result<String, P4Error> {
-        if self.input_sepcification.is_none() {
+    /// Submits the form to the server and returns the raw output.
+    /// ```ignore
+    /// let form = P4ChangeForm::new("my_changelist")?;
+    /// let output = P4RawCmd::new("change")
+    ///    .with_submit_form(Box::new(form))
+    ///    .submit_form()?;
+    /// ```
+    /// Note that forms should implement P4FormCmd and P4RawCmd would not need to be used.
+    pub fn submit_form(self) -> Result<String, P4Error> {
+        if self.form.is_none() || !matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
-                ".submit_spec() was called while the specification is empty.",
+                ".submit_form() was called while the form and/or form_action is unset. Use .with_submit_form()",
             ));
         }
 
-        // returns the raw data for now, but the Specification should implement what this returns.
-        // Also note thet send_input will use change now right away.
         IterCmd::from(self).send_input()
     }
 }
@@ -132,34 +174,27 @@ impl From<P4RawCmd> for IterCmd {
         let mut cmd = IterCmd::new("p4")
             .args(&p4_cmd.g_option.to_arg_list())
             .arg(&p4_cmd.cmd)
+            .args(&p4_cmd.form_action.to_arg_list())
             .args(&p4_cmd.args)
             .args(&p4_cmd.wildcards);
 
-        if let Some(input_spec) = p4_cmd.input_sepcification {
-            cmd = cmd.set_input(input_spec.convert());
+        if let Some(input_form) = p4_cmd.form {
+            cmd = cmd.set_input(input_form.convert());
         }
         cmd
     }
 }
 
-pub trait P4Cmd {
-    type Output;
+pub trait P4Cmd: Into<P4RawCmd> {
+    type Output: DeserializeOwned;
 
-    fn to_p4_query_cmd(&self) -> P4RawCmd;
-
-    fn run(&self) -> Result<P4TypedRunningCmd<Self::Output>, P4Error>
-    where
-        Self::Output: DeserializeOwned,
-    {
-        Ok(self.to_p4_query_cmd().run()?.cast())
+    fn run(self) -> Result<P4TypedRunningCmd<Self::Output>, P4Error> {
+        Ok(self.into().run()?.cast())
     }
 
     /// Returns the first item, expecting it to be Content.
     /// Fails if the first item is a non-content message or if there are no results.
-    fn single_content(&self) -> Result<Self::Output, P4Error>
-    where
-        Self::Output: DeserializeOwned,
-    {
+    fn single_content(self) -> Result<Self::Output, P4Error> {
         match self.run()?.next() {
             Some(P4Out::Content(v)) => Ok(v),
             Some(other) => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
@@ -169,10 +204,7 @@ pub trait P4Cmd {
 
     /// Skips Info and Warning messages, returning the first Content item.
     /// Fails on Failure/ParseError, or if no Content is found.
-    fn first_content(&self) -> Result<Self::Output, P4Error>
-    where
-        Self::Output: DeserializeOwned,
-    {
+    fn first_content(self) -> Result<Self::Output, P4Error> {
         for item in self.run()? {
             match item {
                 P4Out::Content(v) => return Ok(v),
@@ -184,19 +216,28 @@ pub trait P4Cmd {
     }
 }
 
-pub trait P4SpecCmd {
-    type Output;
+pub trait P4FormCmd: Into<P4RawCmd> {
+    type FormSubmitOutput;
+    type Form: P4Form + DeserializeOwned + Debug + 'static;
 
-    fn to_p4_spec_submit_cmd(&self) -> P4RawCmd;
-
-    fn submit_spec(&self, spec: Box<dyn P4Specification>) -> Result<String, P4Error> {
-        self.to_p4_spec_submit_cmd()
-            .with_input_spec(spec)
-            .submit_spec()
+    fn read_form(self) -> Result<Self::Form, P4Error> {
+        let raw_command = self.into().with_read_form();
+        match raw_command.run()?.cast::<Self::Form>().next() {
+            Some(P4Out::Content(form)) => Ok(form),
+            Some(other) => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
+            None => Err(P4Error::NoResults),
+        }
     }
+
+    fn submit_form(self, form: Self::Form) -> Result<Self::FormSubmitOutput, P4Error> {
+        let raw_output = self.into().with_submit_form(Box::new(form)).submit_form()?;
+        Self::parse_form_submit_raw_output(raw_output)
+    }
+
+    fn parse_form_submit_raw_output(raw_output: String) -> Result<Self::FormSubmitOutput, P4Error>;
 }
 
-/// A trait for structures that hold P4 Specs and need to be converted to the CLI commands.
-pub trait P4Specification {
+/// A trait for structures that hold data of a P4 Forms and need to be converted to the CLI commands.
+pub trait P4Form {
     fn convert(&self) -> String;
 }

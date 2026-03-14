@@ -42,20 +42,22 @@ pub struct P4FStatOut {
     // Fixme: not complete
 }
 
-impl P4Cmd for P4FStat {
-    type Output = P4FStatOut;
-
-    fn to_p4_query_cmd(&self) -> P4RawCmd {
+impl From<P4FStat> for P4RawCmd {
+    fn from(value: P4FStat) -> Self {
         let mut p4_cmd = P4RawCmd::new("fstat");
 
-        if let Some(v) = self.max {
+        if let Some(v) = value.max {
             p4_cmd = p4_cmd.with_arg_value("-m", v.to_string());
         };
 
-        p4_cmd.wildcards = self.wildcards.clone();
+        p4_cmd.wildcards = value.wildcards.clone();
 
         p4_cmd
     }
+}
+
+impl P4Cmd for P4FStat {
+    type Output = P4FStatOut;
 }
 
 // Constructors
@@ -75,4 +77,3 @@ impl P4FStat {
         }
     }
 }
-

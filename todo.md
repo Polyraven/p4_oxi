@@ -1,6 +1,6 @@
 - [x] Rename `P4Message` to `P4Out<T>` (categorized server output) and introduce `P4Error` (crate-level errors), replacing the `String` error type everywhere
 - [x] Implement `Display` and `std::error::Error` for `P4Error` manually, no `thiserror` dependency
-- [x] Split `P4CmdArgs` into `P4Cmd` trait (query commands) and `P4SpecCmd` trait (spec submission), add `single()` blanket impl on `P4Cmd` so `P4Info` and similar don't need a separate wrapper
+- [x] Split `P4CmdArgs` into `P4Cmd` trait (query commands) and `P4FormCmd` trait (form submission), add `single()` blanket impl on `P4Cmd` so `P4Info` and similar don't need a separate wrapper
 - [x] Remove `P4Single` from `warnings.rs`, replaced by `single()` on `P4Cmd` trait
 - [ ] Move `FileAction` and `Workspace` out of `outputs.rs` into their respective command files when those commands are implemented, then delete `outputs.rs`
 - [ ] Implement more commands, `p4 dirs`, `p4 files`, `p4 edit`, `p4 add` as minimum for the CLI tool
