@@ -35,12 +35,6 @@ pub struct P4Change {
 #[allow(non_snake_case, dead_code)]
 #[derive(Debug, Deserialize, Serialize, Default)]
 /// Used when creating a changelist but can be also a return value.
-///
-/// Example when used to create a changelist:
-/// ```rust, no_run
-/// let form = P4ChangeForm::new("my_changelist")?;
-/// let changelist_id = P4Change::for_submit().submit(form)?;
-/// ```
 pub struct P4ChangeForm {
     pub Change: String,
     pub Client: String,
@@ -54,6 +48,12 @@ pub struct P4ChangeForm {
 }
 
 impl P4ChangeForm {
+    /// Creates a new changelist form with the given description.
+    ///
+    /// ```rust, no_run
+    /// let form = P4ChangeForm::new("my_changelist")?;
+    /// let changelist_id = P4Change::for_submit().submit(form)?;
+    /// ```
     pub fn new(description: &str) -> Result<Self, P4Error> {
         let info = P4Info::default().first_content()?;
 
@@ -258,7 +258,7 @@ impl P4ChangeSetUser {
 }
 
 impl P4ChangeCrossServerDelete {
-    p4_expose!(with_force);
+    // nothing to expose here, all variables already set.
 }
 
 // Trait impls /////////////////////////////////////////////////////////////////
