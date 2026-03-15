@@ -80,13 +80,12 @@ impl P4Change {
 
 use crate::p4_lensed_cmd::P4CmdMode;
 
-p4_cmd_modes!(
-    P4Change,
-    [
-        (P4ChangeDelete, ChangeDelete, P4RunEager),
-        (P4ChangeRead, ChangeRead, P4RunRead)
-    ]
-);
+p4_cmd_modes!(P4Change, [
+    // p4 change -d [-f -s -O] changelist
+    (P4ChangeDelete, ChangeDelete, P4RunEager),
+    // p4 change -o [-s] [-f] [[-O|-I] changelist]
+    (P4ChangeRead, ChangeRead, P4RunRead),
+]);
 
 impl P4ChangeRead {
     p4_expose!(with_changelist_number, changelist_id: u64);
