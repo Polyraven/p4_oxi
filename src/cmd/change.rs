@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     P4FormCmd, P4RawCmd,
-    cmd::info::P4Info,
     error::P4Error,
     p4_cmd::{P4Cmd, P4Form},
     p4_lensed_cmd::{P4CmdMode, P4LensedCmd, P4RunEager, P4RunRead, P4RunSubmit},
@@ -32,48 +31,48 @@ pub struct P4Change {
 
 // Form and/or Output /////////////////////////////////////////////////////////
 
-#[allow(non_snake_case, dead_code)]
 #[derive(Debug, Deserialize, Serialize, Default)]
+#[serde(default, rename_all = "PascalCase")]
 /// Used when creating a changelist but can be also a return value.
 pub struct P4ChangeForm {
-    pub Change: String,
-    pub Client: String,
-    pub User: String,
-    pub Status: String,
-    pub Description: String,
-    ////////////////////
-    // post-creation fields:
-    pub Date: String,
-    pub Type: String,
+    pub change: String,
+    #[serde(rename = "Client")]
+    pub workspace: String,
+    pub user: String,
+    pub status: String,
+    pub description: String,
+    pub date: String,
+    #[serde(rename = "Type")]
+    pub change_type: String,
+    pub imported_by: String,
+    pub identity: String,
+    pub stream: String,
+    pub jobs: String,
+    pub files: String,
 }
 
 impl P4ChangeForm {
+    pub fn blank() -> Result<Self, P4Error> {
+        P4Change::for_read(None).read()
+    }
+
     /// Creates a new changelist form with the given description.
     ///
     /// ```rust, no_run
     /// let form = P4ChangeForm::new("my_changelist")?;
     /// let changelist_id = P4Change::for_submit().submit(form)?;
     /// ```
-    pub fn new(description: &str) -> Result<Self, P4Error> {
-        let info = P4Info::default().first_content()?;
+    pub fn new(description: impl ToString) -> Result<Self, P4Error> {
+        let mut change_form = Self::blank()?;
+        change_form.description = description.to_string();
 
-        Ok(Self {
-            Change: "new".to_string(),
-            Client: info.clientName,
-            User: info.userName,
-            Status: "new".to_string(),
-            Description: description.to_string(),
-            ..Default::default()
-        })
+        Ok(change_form)
     }
 }
 
 impl P4Form for P4ChangeForm {
-    fn convert(&self) -> String {
-        format!(
-            "Change: {}\nClient: {}\nUser: {}\nStatus: {}\nDescription:\n\t{}\n",
-            self.Change, self.Client, self.User, self.Status, self.Description
-        )
+    fn multiline_fields(&self) -> &'static [&'static str] {
+        &["Description", "Jobs", "Files"]
     }
 }
 

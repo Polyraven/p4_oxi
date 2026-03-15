@@ -11,8 +11,8 @@ use crate::p4_out::P4Out;
 /// iteration from happening at all.
 #[derive(Debug)]
 pub enum P4Error {
-    /// Failed to spawn the p4 process or encountered an IO error.
-    ProcessError(String),
+    /// Failed to spawn, communicate with, or wait on the P4 process.
+    ProcessError(String, Option<std::io::Error>),
     /// The API was used incorrectly (e.g. calling `.run()` when an input form is set).
     InvalidUsage(&'static str),
     /// A command that expected at least one result got none.
@@ -28,7 +28,10 @@ pub enum P4Error {
 impl fmt::Display for P4Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            P4Error::ProcessError(msg) => write!(f, "p4-oxi: process error: {msg}"),
+            P4Error::ProcessError(msg, Some(e)) => {
+                write!(f, "p4-oxi: process error: {msg}: {e}")
+            }
+            P4Error::ProcessError(msg, None) => write!(f, "p4-oxi: process error: {msg}"),
             P4Error::InvalidUsage(msg) => write!(f, "p4-oxi: invalid usage: {msg}"),
             P4Error::NoResults => write!(f, "p4-oxi: expected a result but got none"),
             P4Error::UnexpectedOutput(out) => write!(f, "p4-oxi: unexpected output: {out:?}"),
@@ -38,4 +41,17 @@ impl fmt::Display for P4Error {
     }
 }
 
-impl std::error::Error for P4Error {}
+impl std::error::Error for P4Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            P4Error::ProcessError(_, Some(e)) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<std::io::Error> for P4Error {
+    fn from(e: std::io::Error) -> Self {
+        P4Error::ProcessError(e.to_string(), Some(e))
+    }
+}

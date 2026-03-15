@@ -55,31 +55,30 @@ impl IterCmd {
             .stderr(Stdio::piped())
             .spawn();
 
-        let mut pipe = match pipe_result {
-            Err(e) => {
-                return Err(P4Error::ProcessError(format!(
-                    "Failed to execute command: {e}"
-                )));
-            }
-            Ok(pipe) => pipe,
+        let mut pipe = pipe_result
+            .map_err(|e| P4Error::ProcessError("Failed to spawn process".to_string(), Some(e)))?;
+
+        let Some(input) = self.input.clone() else {
+            return Err(P4Error::InvalidUsage(
+                ".send_input() called with no input actually set.",
+            ));
         };
+        let stdin = pipe.stdin.as_mut().ok_or_else(|| {
+            P4Error::ProcessError("Failed to open stdin".to_string(), None)
+        })?;
+        stdin.write_all(input.as_bytes())?;
+        stdin.flush()?;
 
-        let input = self.input.clone().unwrap();
-        {
-            let stdin = pipe.stdin.as_mut().expect("Failed to open stdin");
-            stdin.write_all(input.as_bytes()).unwrap();
-            stdin.flush().unwrap();
-        }
-
-        let output = pipe.wait_with_output().unwrap();
+        let output = pipe.wait_with_output()?;
         if output.status.success() {
             let std_out = String::from_utf8_lossy(&output.stdout);
             Ok(std_out.into_owned())
         } else {
             let std_err = String::from_utf8_lossy(&output.stderr);
-            Err(P4Error::ProcessError(format!(
-                "Failed to write stdin: {std_err}"
-            )))
+            Err(P4Error::ProcessError(
+                format!("stderr: {std_err}"),
+                None,
+            ))
         }
     }
 
@@ -97,24 +96,20 @@ impl IterCmd {
             .stderr(Stdio::piped())
             .spawn();
 
-        let mut pipe = match pipe_result {
-            Err(e) => {
-                return Err(P4Error::ProcessError(format!(
-                    "Failed to spawn process: {e}"
-                )));
-            }
-            Ok(pipe) => pipe,
-        };
+        let mut pipe = pipe_result
+            .map_err(|e| P4Error::ProcessError("Failed to spawn process".to_string(), Some(e)))?;
 
         let Some(stdout_handler) = pipe.stdout.take() else {
             return Err(P4Error::ProcessError(
                 "Failed to capture stdout".to_string(),
+                None,
             ));
         };
 
         let Some(stderr_handler) = pipe.stderr.take() else {
             return Err(P4Error::ProcessError(
                 "Failed to capture stderr".to_string(),
+                None,
             ));
         };
 
@@ -129,16 +124,16 @@ impl IterCmd {
 
 impl RunningIterCmd {
     pub fn wait(&mut self) -> Result<(), P4Error> {
-        let Ok(exit_status) = self.pipe.wait() else {
-            return Err(P4Error::ProcessError(
-                "Failed to wait on process (no exit_status received)".to_string(),
-            ));
-        };
+        let exit_status = self
+            .pipe
+            .wait()
+            .map_err(|e| P4Error::ProcessError("Failed to wait on process".to_string(), Some(e)))?;
 
         if !exit_status.success() {
-            Err(P4Error::ProcessError(format!(
-                "Process exited with status: {exit_status:?}"
-            )))
+            Err(P4Error::ProcessError(
+                format!("Process exited with status: {exit_status:?}"),
+                None,
+            ))
         } else {
             Ok(())
         }

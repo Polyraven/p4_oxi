@@ -15,7 +15,7 @@ impl P4ClientVersion {
         let output = Command::new("p4")
             .arg("-V")
             .output()
-            .map_err(|e| P4Error::ProcessError(format!("Failed to run p4: {e}")))?;
+            .map_err(|e| P4Error::ProcessError("Failed to run p4 -V".to_string(), Some(e)))?;
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 

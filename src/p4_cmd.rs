@@ -45,8 +45,8 @@ pub struct P4RawCmd {
     pub args: Vec<String>,
     /// Last argument, needs special validation
     pub wildcards: Vec<String>,
-    /// Used when creating a changelist or a stream etc. by feeding the bytes in with stdin.
-    pub form: Option<Box<dyn P4Form>>,
+    /// Serialized form data fed to stdin when submitting forms.
+    pub form_input: Option<String>,
     ///
     pub form_action: P4FormAction,
 }
@@ -112,16 +112,16 @@ impl P4RawCmd {
         self
     }
 
-    pub fn with_submit_form(mut self, form: Box<dyn P4Form>) -> Self {
+    pub fn with_submit_form(mut self, form_input: String) -> Self {
         self.form_action = P4FormAction::Submit;
-        self.form = Some(form);
+        self.form_input = Some(form_input);
         self.g_option.format_as_json = false;
         self
     }
 
     pub fn with_read_form(mut self) -> Self {
         self.form_action = P4FormAction::Read;
-        self.form = None;
+        self.form_input = None;
         self.g_option.format_as_json = true;
         self
     }
@@ -129,7 +129,7 @@ impl P4RawCmd {
     /// This is the default state, no need to call it unless mutating an existing command.
     pub fn with_no_form_action(mut self) -> Self {
         self.form_action = P4FormAction::None;
-        self.form = None;
+        self.form_input = None;
         self.g_option.format_as_json = true;
         self
     }
@@ -138,7 +138,7 @@ impl P4RawCmd {
     /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
     /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4FormCmd traits already do with the output type specified.
     pub fn run(self) -> Result<P4RunningCmd, P4Error> {
-        if self.form.is_some() || matches!(self.form_action, P4FormAction::Submit) {
+        if self.form_input.is_some() || matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
                 "A command cannot be run() when input_form is set (unintended misuse? For uploading forms call .submit_form())",
             ));
@@ -154,12 +154,12 @@ impl P4RawCmd {
     /// ```ignore
     /// let form = P4ChangeForm::new("my_changelist")?;
     /// let output = P4RawCmd::new("change")
-    ///    .with_submit_form(Box::new(form))
+    ///    .with_submit_form(form.to_p4_form_str()?)
     ///    .submit_form()?;
     /// ```
     /// Note that forms should implement P4FormCmd and P4RawCmd would not need to be used.
     pub fn submit_form(self) -> Result<String, P4Error> {
-        if self.form.is_none() || !matches!(self.form_action, P4FormAction::Submit) {
+        if self.form_input.is_none() || !matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
                 ".submit_form() was called while the form and/or form_action is unset. Use .with_submit_form()",
             ));
@@ -178,8 +178,8 @@ impl From<P4RawCmd> for IterCmd {
             .args(&p4_cmd.args)
             .args(&p4_cmd.wildcards);
 
-        if let Some(input_form) = p4_cmd.form {
-            cmd = cmd.set_input(input_form.convert());
+        if let Some(form_input) = p4_cmd.form_input {
+            cmd = cmd.set_input(form_input);
         }
         cmd
     }
@@ -266,14 +266,54 @@ pub trait P4FormCmd: Into<P4RawCmd> {
     }
 
     fn submit_form(self, form: Self::Form) -> Result<Self::FormSubmitOutput, P4Error> {
-        let raw_output = self.into().with_submit_form(Box::new(form)).submit_form()?;
+        let form_str = form.to_p4_form_str()?;
+        let raw_output = self.into().with_submit_form(form_str).submit_form()?;
         Self::parse_form_submit_raw_output(raw_output)
     }
 
     fn parse_form_submit_raw_output(raw_output: String) -> Result<Self::FormSubmitOutput, P4Error>;
 }
 
-/// A trait for structures that hold data of a P4 Forms and need to be converted to the CLI commands.
-pub trait P4Form {
-    fn convert(&self) -> String;
+/// A trait for structures that hold data of a P4 Forms and need to be serialized for the CLI.
+pub trait P4Form: Serialize {
+    /// Fields whose values should be tab-indented on the lines below their key during serialization.
+    fn multiline_fields(&self) -> &'static [&'static str];
+
+    fn to_p4_form_str(&self) -> Result<String, P4Error> {
+        let value = serde_json::to_value(self)
+            .map_err(|e| P4Error::ParseError(format!("P4Form serialization failed: {e}")))?;
+        let map = value.as_object().ok_or_else(|| {
+            P4Error::ParseError("P4Form must serialize as a JSON object".to_string())
+        })?;
+        let multiline = self.multiline_fields();
+
+        let mut out = String::new();
+        for (key, val) in map {
+            let val_str = match val {
+                serde_json::Value::String(s) => s.clone(),
+                serde_json::Value::Null => continue,
+                other => other.to_string(),
+            };
+            if val_str.is_empty() {
+                continue;
+            }
+            out.push_str(key);
+            out.push_str(": ");
+
+            if multiline.contains(&key.as_str()) {
+                val_str.lines().for_each(|l| {
+                    out.push_str(format!("\n\t{l}").as_str());
+                });
+            } else if val_str.contains('\n') {
+                return Err(P4Error::ParseError(format!(
+                    "P4Form field '{key}' contains a newline but is not a multiline field"
+                )));
+            } else {
+                out.push_str(&val_str);
+            }
+
+            out.push('\n'); // new line after each value
+        }
+        Ok(out)
+    }
 }
