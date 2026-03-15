@@ -5,7 +5,10 @@
 - [ ] Move `FileAction` and `Workspace` out of `outputs.rs` into their respective command files when those commands are implemented, then delete `outputs.rs`
 - [ ] Implement more commands, `p4 dirs`, `p4 files`, `p4 edit`, `p4 add` as minimum for the CLI tool
 - [ ] Start `p4-oxi-tui`, the interactive CLI tool using `inquire` or something similar, MVP being add files to a changelist with context persistence
-- [ ] Implement `Lensed<Cmd, Mode, Exec>` wrapper with execution types (`Eager`, `Streaming`, `FormRead`, `FormSubmit`)
-- [ ] Implement `P4Change` modes as proof of pattern: `for_delete`, `for_submit`, `for_read`, `for_set_type`, `for_set_user` with per-mode `with_` builder lensing
-- [ ] Add `with_` builder methods on command structs (both direct and lensed through wrappers)
+- [x] Implement `P4LensedCmd<Cmd, Mode, Exec>` wrapper with execution types (`P4RunEager`, `P4RunQuery`, `P4RunRead`, `P4RunSubmit`)
+- [x] Implement `P4Change` modes as proof of pattern: `for_delete`, `for_submit`, `for_read`, `for_set_type`, `for_set_user`, `for_cross_server_delete` with per-mode `with_` builder lensing
+- [x] Add `with_` builder methods on P4Change (both direct and lensed through wrappers via `p4_expose!` macro)
+- [x] Add `p4_cmd_modes!` macro for defining mode structs, trait impls, and type aliases
+- [ ] Rename `P4Form::convert()` to `serialize()`, add blanket implementation using serde + `multiline_fields()`
+- [ ] Complete `P4ChangeForm` fields (add `ImportedBy`, `Identity`, `Jobs`, `Stream`, `Files`)
 - [ ] Evaluate whether `apply()` (fire-and-forget execution) is needed based on TUI usage patterns

@@ -91,7 +91,7 @@ macro_rules! p4_cmd_modes {
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-// P4Cmd passthrough — mirrors P4Cmd trait methods.
+// P4Cmd passthrough; mirrors P4Cmd trait methods.
 // If P4Cmd changes, update these impls.
 
 impl<C: P4Cmd, M: P4CmdMode> P4LensedCmd<C, M, P4RunEager> {
@@ -114,7 +114,7 @@ impl<C: P4Cmd, M: P4CmdMode> P4LensedCmd<C, M, P4RunQuery> {
     }
 }
 
-// P4FormCmd passthrough — mirrors P4FormCmd trait methods.
+// P4FormCmd passthrough; mirrors P4FormCmd trait methods.
 // If P4FormCmd changes, update these impls.
 
 impl<C: P4FormCmd, M: P4CmdMode> P4LensedCmd<C, M, P4RunRead> {

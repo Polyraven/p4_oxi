@@ -1,6 +1,6 @@
 //! Defines core traits and a general wrapper around P4 commands that the whole command system in this crate is built on..
 
-use serde::de::DeserializeOwned;
+use serde::{Serialize, de::DeserializeOwned};
 use std::fmt::Debug;
 
 use crate::{
