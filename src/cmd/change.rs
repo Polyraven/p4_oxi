@@ -68,7 +68,7 @@ impl From<P4Change> for P4RawCmd {
     fn from(value: P4Change) -> Self {
         let mut raw = P4RawCmd::new("change");
         if let Some(changelist_id) = value.changelist_id {
-            raw = raw.with_arg(&changelist_id.to_string())
+            raw = raw.with_arg(changelist_id)
         };
         raw
     }

@@ -72,7 +72,7 @@ impl P4FormAction {
 }
 
 impl P4RawCmd {
-    pub fn new(cmd: &str) -> Self {
+    pub fn new(cmd: impl ToString) -> Self {
         P4RawCmd {
             cmd: cmd.to_string(),
             ..Default::default()
@@ -84,31 +84,31 @@ impl P4RawCmd {
         self
     }
 
-    pub fn with_arg(mut self, arg: &str) -> Self {
+    pub fn with_arg(mut self, arg: impl ToString) -> Self {
         self.args.push(arg.to_string());
         self
     }
 
-    pub fn with_arg_value(mut self, arg: &str, value: String) -> Self {
+    pub fn with_arg_value(mut self, arg: impl ToString, value: impl ToString) -> Self {
         self.args.push(arg.to_string());
-        self.args.push(value);
+        self.args.push(value.to_string());
         self
     }
 
-    pub fn with_args(mut self, args: Vec<&str>) -> Self {
+    pub fn with_args(mut self, args: &[impl ToString]) -> Self {
         args.iter().for_each(|arg| self.args.push(arg.to_string()));
         self
     }
 
-    pub fn with_wildcard(mut self, wildcard: &str) -> Self {
-        self.wildcards.push(wildcard.to_string());
+    pub fn with_wildcard(mut self, wildcard: impl Into<String>) -> Self {
+        self.wildcards.push(wildcard.into());
         self
     }
 
-    pub fn with_wildcards(mut self, wildcards: Vec<&str>) -> Self {
+    pub fn with_wildcards(mut self, wildcards: &[impl AsRef<str>]) -> Self {
         wildcards
             .iter()
-            .for_each(|wildcard| self.wildcards.push(wildcard.to_string()));
+            .for_each(|wildcard| self.wildcards.push(wildcard.as_ref().to_string()));
         self
     }
 

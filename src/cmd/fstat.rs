@@ -47,7 +47,7 @@ impl From<P4FStat> for P4RawCmd {
         let mut p4_cmd = P4RawCmd::new("fstat");
 
         if let Some(v) = value.max {
-            p4_cmd = p4_cmd.with_arg_value("-m", v.to_string());
+            p4_cmd = p4_cmd.with_arg_value("-m", v);
         };
 
         p4_cmd.wildcards = value.wildcards.clone();
@@ -62,15 +62,15 @@ impl P4Cmd for P4FStat {
 
 // Constructors
 impl P4FStat {
-    pub fn of_one(wildcard: &str) -> Self {
+    pub fn of_one(wildcard: impl Into<String>) -> Self {
         Self {
-            wildcards: vec![wildcard.to_string()],
+            wildcards: vec![wildcard.into()],
             max: Some(1),
             ..Default::default()
         }
     }
 
-    pub fn of_many(wildcards: &[&str]) -> Self {
+    pub fn of_many(wildcards: &[impl ToString]) -> Self {
         Self {
             wildcards: wildcards.iter().map(|w| w.to_string()).collect(),
             ..Default::default()
