@@ -185,6 +185,15 @@ impl From<P4RawCmd> for IterCmd {
     }
 }
 
+/// Trait for commands that deserialize the server output to the specified output type.
+///
+/// To make these methods available on a command one would add this during implementation:
+/// ```rust, no_run
+/// impl P4Cmd for P4FStat {
+///    type Output = P4FStatOut;
+/// ```
+///
+/// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
 pub trait P4Cmd: Into<P4RawCmd> {
     type Output: DeserializeOwned;
 
@@ -214,8 +223,35 @@ pub trait P4Cmd: Into<P4RawCmd> {
         }
         Err(P4Error::NoResults)
     }
+
+    /// Executes the command without returning anything, usefull for fire and forget commands.
+    /// If the return value is required, use run()
+    fn apply(self) -> Result<(), P4Error> {
+        for item in self.run()? {
+            match item {
+                P4Out::Failure(_) | P4Out::ParseError(_) => {
+                    return Err(P4Error::UnexpectedOutput(item.erase_content_type()));
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
 }
 
+/// Trait for commands that read or submit P4 forms.
+///
+/// Example implementation for a command:
+/// impl P4FormCmd for P4Change {
+///     type FormSubmitOutput = u64;
+///     type Form = P4ChangeForm;
+///
+///     fn parse_form_submit_raw_output(raw: String) -> Result<Self::FormSubmitOutput, P4Error> {
+///          // Parse into FormSubmitOutput here
+///     }
+/// }
+///
+/// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
 pub trait P4FormCmd: Into<P4RawCmd> {
     type FormSubmitOutput;
     type Form: P4Form + DeserializeOwned + Debug + 'static;

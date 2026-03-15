@@ -11,6 +11,7 @@ use crate::{
     cmd::info::P4Info,
     error::P4Error,
     p4_cmd::{P4Cmd, P4Form},
+    p4_lensed_cmd::{P4LensedCmd, P4RunEager, P4RunRead},
 };
 
 #[allow(non_snake_case, dead_code)]
@@ -22,7 +23,6 @@ use crate::{
 /// let form = P4ChangeForm::new("my_changelist")?;
 /// let changelist_id = P4Change::default().submit_form(form)?;
 /// ```
-///
 pub struct P4ChangeForm {
     pub Change: String,
     pub Client: String,
@@ -62,6 +62,34 @@ impl P4Form for P4ChangeForm {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct P4Change {
     pub changelist_id: Option<u64>,
+}
+
+impl P4Change {
+    pub fn with_changelist_number(mut self, changelist_id: u64) -> Self {
+        self.changelist_id = Some(changelist_id);
+        self
+    }
+
+    pub fn for_read_form(changelist_id: u64) -> P4ChangeRead {
+        P4LensedCmd::new(P4Change {
+            changelist_id: Some(changelist_id),
+            ..Default::default()
+        })
+    }
+}
+
+use crate::p4_lensed_cmd::P4CmdMode;
+
+p4_cmd_modes!(
+    P4Change,
+    [
+        (P4ChangeDelete, ChangeDelete, P4RunEager),
+        (P4ChangeRead, ChangeRead, P4RunRead)
+    ]
+);
+
+impl P4ChangeRead {
+    p4_expose!(with_changelist_number, changelist_id: u64);
 }
 
 impl From<P4Change> for P4RawCmd {
