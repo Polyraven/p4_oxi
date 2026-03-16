@@ -89,7 +89,7 @@ macro_rules! p4_lens {
     ($alias:ident, $mode:ident, $cmd:ty, $run:ty) => {
         pub struct $mode;
         impl P4CmdMode for $mode {}
-        pub type $alias = P4LensedCmd<$cmd, $mode, $run>;
+        type $alias = P4LensedCmd<$cmd, $mode, $run>;
     };
 }
 

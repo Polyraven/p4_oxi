@@ -8,20 +8,25 @@ use serde::{Deserialize, Serialize};
 
 use crate::{p4_lensed_cmd::*, *};
 
+// Aliases /////////////////////////////////////////////////////////////////////
+
+pub type P4Changelist = P4Change;
+pub type P4ChangelistForm = P4ChangeForm;
+
 // Command struct //////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Default)]
 pub struct P4Change {
-    changelist_id: Option<u64>,            // positional
-    delete: bool,                          // -d
-    force: bool,                           // -f
-    update: bool,                          // -u
-    arbitrary_job_status: bool,            // -s
-    as_pre_submit_changelist_id: bool,     // -O
-    as_identity_changelist_id: bool,       // -I
-    change_type: Option<ChangeVisibility>, // -t restricted|public
-    user: Option<String>,                  // -U user
-    server_id: Option<String>,             // --serverid=X
+    changelist_id: Option<u64>,              // positional
+    delete: bool,                            // -d
+    force: bool,                             // -f
+    update: bool,                            // -u
+    arbitrary_job_status: bool,              // -s
+    as_pre_submit_changelist_id: bool,       // -O
+    as_identity_changelist_id: bool,         // -I
+    change_type: Option<P4ChangeVisibility>, // -t restricted|public
+    user: Option<String>,                    // -U user
+    server_id: Option<String>,               // --serverid=X
 }
 
 // Form / Output ///////////////////////////////////////////////////////////////
@@ -135,16 +140,16 @@ impl P4FormCmd for P4Change {
 // Command Builders ////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Copy)]
-pub enum ChangeVisibility {
+pub enum P4ChangeVisibility {
     Restricted,
     Public,
 }
 
-impl ChangeVisibility {
+impl P4ChangeVisibility {
     fn as_str(&self) -> &str {
         match self {
-            ChangeVisibility::Restricted => "restricted",
-            ChangeVisibility::Public => "public",
+            P4ChangeVisibility::Restricted => "restricted",
+            P4ChangeVisibility::Public => "public",
         }
     }
 }
@@ -180,7 +185,7 @@ impl P4Change {
         self
     }
 
-    fn with_change_type(mut self, vis: ChangeVisibility) -> Self {
+    fn with_change_type(mut self, vis: P4ChangeVisibility) -> Self {
         self.change_type = Some(vis);
         self
     }
@@ -254,7 +259,7 @@ impl P4ChangeSubmit {
 // p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
 p4_lens!(P4ChangeSetType, ChangeSetType, P4Change, P4RunEager);
 impl P4Change {
-    pub fn for_set_type(changelist_id: u64, vis: ChangeVisibility) -> P4ChangeSetType {
+    pub fn for_set_type(changelist_id: u64, vis: P4ChangeVisibility) -> P4ChangeSetType {
         P4LensedCmd::new(P4Change {
             changelist_id: Some(changelist_id),
             change_type: Some(vis),
@@ -285,7 +290,7 @@ impl P4Change {
 }
 impl P4ChangeSetUser {
     p4_expose_many!(
-        with_change_type, vis: ChangeVisibility;
+        with_change_type, vis: P4ChangeVisibility;
         with_force;
     );
 }
@@ -328,7 +333,7 @@ impl P4ChangeWild {
         with_arbitrary_job_status;
         with_as_pre_submit_changelist_id;
         with_as_identity_changelist_id;
-        with_change_type, vis: ChangeVisibility;
+        with_change_type, vis: P4ChangeVisibility;
         with_user, user: String;
         with_server_id, id: String;
     );

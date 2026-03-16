@@ -8,21 +8,26 @@ use serde::{Deserialize, Serialize};
 
 use crate::{p4_lensed_cmd::*, *};
 
+// Aliases /////////////////////////////////////////////////////////////////////
+
+pub type P4Client = P4Workspace;
+pub type P4ClientForm = P4WorkspaceForm;
+
 // Command struct //////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Default)]
 pub struct P4Workspace {
-    name: Option<String>,                  // positional [name]
-    delete: bool,                          // -d
-    force: bool,                           // -f
-    switch: bool,                          // -s
-    template: Option<String>,              // -t template
-    workspace_type: Option<WorkspaceType>, // -T type
-    stream: Option<String>,                // -S stream (supports stream@change)
-    at_change: Option<u64>,                // -c change
-    server_id: Option<String>,             // --serverid=X
-    force_shelved_keep: bool,              // -Fs
-    force_shelved_delete: bool,            // -Fd
+    name: Option<String>,                    // positional [name]
+    delete: bool,                            // -d
+    force: bool,                             // -f
+    switch: bool,                            // -s
+    template: Option<String>,                // -t template
+    workspace_type: Option<P4WorkspaceType>, // -T type
+    stream: Option<String>,                  // -S stream (supports stream@change)
+    at_change: Option<u64>,                  // -c change
+    server_id: Option<String>,               // --serverid=X
+    force_shelved_keep: bool,                // -Fs
+    force_shelved_delete: bool,              // -Fd
 }
 
 // Form / Output ///////////////////////////////////////////////////////////////
@@ -130,7 +135,7 @@ impl P4FormCmd for P4Workspace {
 // Command Builders ////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Copy)]
-pub enum WorkspaceType {
+pub enum P4WorkspaceType {
     Writeable,
     Readonly,
     Partitioned,
@@ -138,20 +143,20 @@ pub enum WorkspaceType {
     Graph,
 }
 
-impl WorkspaceType {
+impl P4WorkspaceType {
     fn as_str(&self) -> &str {
         match self {
-            WorkspaceType::Writeable => "writeable",
-            WorkspaceType::Readonly => "readonly",
-            WorkspaceType::Partitioned => "partitioned",
-            WorkspaceType::PartitionedJnl => "partitioned-jnl",
-            WorkspaceType::Graph => "graph",
+            P4WorkspaceType::Writeable => "writeable",
+            P4WorkspaceType::Readonly => "readonly",
+            P4WorkspaceType::Partitioned => "partitioned",
+            P4WorkspaceType::PartitionedJnl => "partitioned-jnl",
+            P4WorkspaceType::Graph => "graph",
         }
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum ShelvedPolicy {
+pub enum P4WorkspaceShelvedPolicy {
     Keep,
     Delete,
 }
@@ -172,7 +177,7 @@ impl P4Workspace {
         self
     }
 
-    fn with_workspace_type(mut self, wt: WorkspaceType) -> Self {
+    fn with_workspace_type(mut self, wt: P4WorkspaceType) -> Self {
         self.workspace_type = Some(wt);
         self
     }
@@ -192,11 +197,11 @@ impl P4Workspace {
         self
     }
 
-    fn with_shelved_policy(mut self, policy: ShelvedPolicy) -> Self {
+    fn with_shelved_policy(mut self, policy: P4WorkspaceShelvedPolicy) -> Self {
         self.force = true;
         match policy {
-            ShelvedPolicy::Keep => self.force_shelved_keep = true,
-            ShelvedPolicy::Delete => self.force_shelved_delete = true,
+            P4WorkspaceShelvedPolicy::Keep => self.force_shelved_keep = true,
+            P4WorkspaceShelvedPolicy::Delete => self.force_shelved_delete = true,
         }
         self
     }
@@ -222,7 +227,7 @@ impl P4Workspace {
 impl P4WorkspaceRead {
     p4_expose_many!(
         with_template, template: String;
-        with_workspace_type, wt: WorkspaceType;
+        with_workspace_type, wt: P4WorkspaceType;
         with_stream, stream: String;
         with_at_change, change: u64;
     );
@@ -266,7 +271,7 @@ p4_lens!(
     P4RunEager
 );
 impl P4WorkspaceForcedDelete {
-    p4_expose!(with_shelved_policy, policy: ShelvedPolicy);
+    p4_expose!(with_shelved_policy, policy: P4WorkspaceShelvedPolicy);
 }
 
 // p4 client -s [-f] -S stream [name]
@@ -352,11 +357,11 @@ impl P4WorkspaceWild {
         with_name, name: String;
         with_force;
         with_template, template: String;
-        with_workspace_type, wt: WorkspaceType;
+        with_workspace_type, wt: P4WorkspaceType;
         with_stream, stream: String;
         with_at_change, change: u64;
         with_server_id, id: String;
-        with_shelved_policy, policy: ShelvedPolicy;
+        with_shelved_policy, policy: P4WorkspaceShelvedPolicy;
         with_force_shelved_keep;
     );
 }
