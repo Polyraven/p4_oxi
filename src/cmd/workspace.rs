@@ -10,24 +10,24 @@ use crate::{
     P4FormCmd, P4RawCmd,
     error::P4Error,
     p4_cmd::{P4Cmd, P4Form},
-    p4_lensed_cmd::{P4CmdMode, P4LensedCmd, P4RunEager, P4RunRead, P4RunSubmit},
+    p4_lensed_cmd::{P4CmdMode, P4LensedCmd, P4RunEager, P4RunManual, P4RunRead, P4RunSubmit},
 };
 
 // Command struct //////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Default)]
 pub struct P4Workspace {
-    pub name: Option<String>,                  // positional [name]
-    pub delete: bool,                          // -d
-    pub force: bool,                           // -f
-    pub switch: bool,                          // -s
-    pub template: Option<String>,              // -t template
-    pub workspace_type: Option<WorkspaceType>, // -T type
-    pub stream: Option<String>,                // -S stream (supports stream@change)
-    pub at_change: Option<u64>,                // -c change
-    pub server_id: Option<String>,             // --serverid=X
-    pub force_shelved_keep: bool,              // -Fs
-    pub force_shelved_delete: bool,            // -Fd
+    name: Option<String>,                  // positional [name]
+    delete: bool,                          // -d
+    force: bool,                           // -f
+    switch: bool,                          // -s
+    template: Option<String>,              // -t template
+    workspace_type: Option<WorkspaceType>, // -T type
+    stream: Option<String>,                // -S stream (supports stream@change)
+    at_change: Option<u64>,                // -c change
+    server_id: Option<String>,             // --serverid=X
+    force_shelved_keep: bool,              // -Fs
+    force_shelved_delete: bool,            // -Fd
 }
 
 // Form ////////////////////////////////////////////////////////////////////////
@@ -103,42 +103,42 @@ pub enum ShelvedPolicy {
 // Builder methods on P4Workspace //////////////////////////////////////////////
 
 impl P4Workspace {
-    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+    fn with_name(mut self, name: impl Into<String>) -> Self {
         self.name = Some(name.into());
         self
     }
 
-    pub fn with_force(mut self) -> Self {
+    fn with_force(mut self) -> Self {
         self.force = true;
         self
     }
 
-    pub fn with_template(mut self, template: impl Into<String>) -> Self {
+    fn with_template(mut self, template: impl Into<String>) -> Self {
         self.template = Some(template.into());
         self
     }
 
-    pub fn with_workspace_type(mut self, wt: WorkspaceType) -> Self {
+    fn with_workspace_type(mut self, wt: WorkspaceType) -> Self {
         self.workspace_type = Some(wt);
         self
     }
 
-    pub fn with_stream(mut self, stream: impl Into<String>) -> Self {
+    fn with_stream(mut self, stream: impl Into<String>) -> Self {
         self.stream = Some(stream.into());
         self
     }
 
-    pub fn with_at_change(mut self, change: u64) -> Self {
+    fn with_at_change(mut self, change: u64) -> Self {
         self.at_change = Some(change);
         self
     }
 
-    pub fn with_server_id(mut self, id: impl Into<String>) -> Self {
+    fn with_server_id(mut self, id: impl Into<String>) -> Self {
         self.server_id = Some(id.into());
         self
     }
 
-    pub fn with_shelved_policy(mut self, policy: ShelvedPolicy) -> Self {
+    fn with_shelved_policy(mut self, policy: ShelvedPolicy) -> Self {
         self.force = true;
         match policy {
             ShelvedPolicy::Keep => self.force_shelved_keep = true,
@@ -147,7 +147,7 @@ impl P4Workspace {
         self
     }
 
-    pub fn with_force_shelved_keep(mut self) -> Self {
+    fn with_force_shelved_keep(mut self) -> Self {
         self.force_shelved_keep = true;
         self
     }
@@ -209,88 +209,87 @@ impl P4Workspace {
             ..Default::default()
         })
     }
+
+    /// Unrestricted builder with all flags available.
+    /// Use `.into_cmd()` to obtain the inner command for execution.
+    pub fn wild_west() -> P4WorkspaceWild {
+        P4LensedCmd::new(P4Workspace::default())
+    }
 }
 
 // Modes & Lensed builder passthroughs per mode ////////////////////////////////
 
 // p4 client -o [-t template] [-T type] [-S stream [-c change]] [name]
-pub struct WorkspaceRead;
-impl P4CmdMode for WorkspaceRead {}
-pub type P4WorkspaceRead = P4LensedCmd<P4Workspace, WorkspaceRead, P4RunRead>;
-
-// p4 client -i [-f]
-pub struct WorkspaceSubmit;
-impl P4CmdMode for WorkspaceSubmit {}
-pub type P4WorkspaceSubmit = P4LensedCmd<P4Workspace, WorkspaceSubmit, P4RunSubmit>;
-
-// p4 client -d [-f [-Fs|-Fd]] name
-pub struct WorkspaceDelete;
-impl P4CmdMode for WorkspaceDelete {}
-pub type P4WorkspaceDelete = P4LensedCmd<P4Workspace, WorkspaceDelete, P4RunEager>;
-
-// p4 client -d -f [-Fs|-Fd] name
-pub struct WorkspaceForcedDelete;
-impl P4CmdMode for WorkspaceForcedDelete {}
-pub type P4WorkspaceForcedDelete = P4LensedCmd<P4Workspace, WorkspaceForcedDelete, P4RunEager>;
-
-// p4 client -s [-f] -S stream [name]
-pub struct WorkspaceSwitchStream;
-impl P4CmdMode for WorkspaceSwitchStream {}
-pub type P4WorkspaceSwitchStream = P4LensedCmd<P4Workspace, WorkspaceSwitchStream, P4RunEager>;
-
-// p4 client -s [-f] -t template [name]
-pub struct WorkspaceSwitchTemplate;
-impl P4CmdMode for WorkspaceSwitchTemplate {}
-pub type P4WorkspaceSwitchTemplate = P4LensedCmd<P4Workspace, WorkspaceSwitchTemplate, P4RunEager>;
-
-// p4 client -d -f --serverid=X [-Fs] name
-pub struct WorkspaceCrossServerDelete;
-impl P4CmdMode for WorkspaceCrossServerDelete {}
-pub type P4WorkspaceCrossServerDelete =
-    P4LensedCmd<P4Workspace, WorkspaceCrossServerDelete, P4RunEager>;
-
+p4_lens!(P4WorkspaceRead, WorkspaceRead, P4Workspace, P4RunRead);
 impl P4WorkspaceRead {
-    p4_expose!(with_template, template: String);
-    p4_expose!(with_workspace_type, wt: WorkspaceType);
-    p4_expose!(with_stream, stream: String);
-    p4_expose!(with_at_change, change: u64);
+    p4_expose_many!(
+        with_template, template: String;
+        with_workspace_type, wt: WorkspaceType;
+        with_stream, stream: String;
+        with_at_change, change: u64;
+    );
 }
 
+// p4 client -i [-f]
+p4_lens!(P4WorkspaceSubmit, WorkspaceSubmit, P4Workspace, P4RunSubmit);
 impl P4WorkspaceSubmit {
     p4_expose!(with_force);
 }
 
+// p4 client -d [-f [-Fs|-Fd]] name
+p4_lens!(P4WorkspaceDelete, WorkspaceDelete, P4Workspace, P4RunEager);
 impl P4WorkspaceDelete {
     /// -f: transitions to P4WorkspaceForcedDelete, unlocking [-Fs|-Fd]
-    pub fn with_force(mut self) -> P4WorkspaceForcedDelete {
-        self.inner_cmd.force = true;
-        P4LensedCmd::new(self.inner_cmd)
+    pub fn with_force(self) -> P4WorkspaceForcedDelete {
+        let inner = self.inner_cmd.with_force();
+        P4LensedCmd::new(inner)
     }
 }
 
+// p4 client -d -f [-Fs|-Fd] name
+p4_lens!(P4WorkspaceForcedDelete, WorkspaceForcedDelete, P4Workspace, P4RunEager);
 impl P4WorkspaceForcedDelete {
-    /// [-Fs|-Fd]
-    pub fn with_shelved_policy(mut self, policy: ShelvedPolicy) -> Self {
-        match policy {
-            ShelvedPolicy::Keep => self.inner_cmd.force_shelved_keep = true,
-            ShelvedPolicy::Delete => self.inner_cmd.force_shelved_delete = true,
-        }
-        self
-    }
+    p4_expose!(with_shelved_policy, policy: ShelvedPolicy);
 }
 
+// p4 client -s [-f] -S stream [name]
+p4_lens!(P4WorkspaceSwitchStream, WorkspaceSwitchStream, P4Workspace, P4RunEager);
 impl P4WorkspaceSwitchStream {
-    p4_expose!(with_force);
-    p4_expose!(with_name, name: String);
+    p4_expose_many!(
+        with_force;
+        with_name, name: String;
+    );
 }
 
+// p4 client -s [-f] -t template [name]
+p4_lens!(P4WorkspaceSwitchTemplate, WorkspaceSwitchTemplate, P4Workspace, P4RunEager);
 impl P4WorkspaceSwitchTemplate {
-    p4_expose!(with_force);
-    p4_expose!(with_name, name: String);
+    p4_expose_many!(
+        with_force;
+        with_name, name: String;
+    );
 }
 
+// p4 client -d -f --serverid=X [-Fs] name
+p4_lens!(P4WorkspaceCrossServerDelete, WorkspaceCrossServerDelete, P4Workspace, P4RunEager);
 impl P4WorkspaceCrossServerDelete {
     p4_expose!(with_force_shelved_keep);
+}
+
+// Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
+p4_lens!(P4WorkspaceWild, WorkspaceWild, P4Workspace, P4RunManual);
+impl P4WorkspaceWild {
+    p4_expose_many!(
+        with_name, name: String;
+        with_force;
+        with_template, template: String;
+        with_workspace_type, wt: WorkspaceType;
+        with_stream, stream: String;
+        with_at_change, change: u64;
+        with_server_id, id: String;
+        with_shelved_policy, policy: ShelvedPolicy;
+        with_force_shelved_keep;
+    );
 }
 
 // Trait impls /////////////////////////////////////////////////////////////////
