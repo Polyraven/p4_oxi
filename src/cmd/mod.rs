@@ -16,7 +16,7 @@ pub use workspace::{
     P4Client, P4ClientForm, P4Workspace, P4WorkspaceForm, P4WorkspaceShelvedPolicy, P4WorkspaceType,
 };
 
-pub use fstat::{P4FStat, P4FStatOut};
+pub use fstat::{P4FStat, P4FStatOut, P4FStatOutput, P4FStatRestrict, P4FStatSort};
 pub use info::{P4Info, P4InfoOut};
 
 pub mod client {
