@@ -163,5 +163,6 @@ impl Iterator for RunningIterCmd {
 impl Drop for RunningIterCmd {
     fn drop(&mut self) {
         let _ = self.pipe.kill();
+        let _ = self.pipe.wait();
     }
 }

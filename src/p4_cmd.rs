@@ -31,7 +31,7 @@ use crate::{
 ///```
 ///
 /// The `.start()?` here starts the executions and provides an iterator while p4 is still running.
-/// Thus providing effortless concurency without the need of threads.
+/// Thus providing effortless concurrency without the need of threads.
 ///
 ///
 /// CmdRef documentation:

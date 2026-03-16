@@ -1,5 +1,5 @@
 //! Work in progress crate to interact with P4 server.\
-//! Mostly planned/intended to be used fro client side applications.
+//! Mostly planned/intended to be used for client side applications.
 
 #[macro_use]
 mod p4_lensed_cmd;

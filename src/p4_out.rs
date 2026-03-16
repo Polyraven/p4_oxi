@@ -1,8 +1,8 @@
-//! Holds the messages of info and warnings that come up during command exection.
+//! Holds the messages of info and warnings that come up during command execution.
 
 use serde::Deserialize;
 
-/// Deserializes and utility functions to help deal with p4 command warinngs
+/// Deserializes and utility functions to help deal with p4 command warnings
 /// For any command that has any kind of errors it will respond with a message as such:
 /// ```json
 /// {"data":"<wildcard> - file(s) up-to-date.\n","generic":17,"severity":2}
