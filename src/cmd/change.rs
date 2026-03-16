@@ -6,12 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    P4FormCmd, P4RawCmd,
-    error::P4Error,
-    p4_cmd::{P4Cmd, P4Form},
-    p4_lensed_cmd::{P4CmdMode, P4LensedCmd, P4RunEager, P4RunManual, P4RunRead, P4RunSubmit},
-};
+use crate::{p4_lensed_cmd::*, *};
 
 // Command struct //////////////////////////////////////////////////////////////
 
@@ -29,7 +24,7 @@ pub struct P4Change {
     server_id: Option<String>,             // --serverid=X
 }
 
-// Form and/or Output /////////////////////////////////////////////////////////
+// Form / Output ///////////////////////////////////////////////////////////////
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 #[serde(default, rename_all = "PascalCase")]
@@ -74,210 +69,6 @@ impl P4Form for P4ChangeForm {
     fn multiline_fields(&self) -> &'static [&'static str] {
         &["Description", "Jobs", "Files"]
     }
-}
-
-// Command Specific Types /////////////////////////////////////////////////////
-
-#[derive(Debug, Clone, Copy)]
-pub enum ChangeVisibility {
-    Restricted,
-    Public,
-}
-
-impl ChangeVisibility {
-    fn as_str(&self) -> &str {
-        match self {
-            ChangeVisibility::Restricted => "restricted",
-            ChangeVisibility::Public => "public",
-        }
-    }
-}
-
-// Builder methods on P4Change /////////////////////////////////////////////////
-
-impl P4Change {
-    fn with_changelist_id(mut self, id: u64) -> Self {
-        self.changelist_id = Some(id);
-        self
-    }
-
-    fn with_force(mut self) -> Self {
-        self.force = true;
-        self
-    }
-
-    fn with_update(mut self) -> Self {
-        self.update = true;
-        self
-    }
-
-    fn with_arbitrary_job_status(mut self) -> Self {
-        self.arbitrary_job_status = true;
-        self
-    }
-
-    fn with_as_pre_submit_changelist_id(mut self) -> Self {
-        self.as_pre_submit_changelist_id = true;
-        self
-    }
-
-    fn with_as_identity_changelist_id(mut self) -> Self {
-        self.as_identity_changelist_id = true;
-        self
-    }
-
-    fn with_change_type(mut self, vis: ChangeVisibility) -> Self {
-        self.change_type = Some(vis);
-        self
-    }
-
-    fn with_user(mut self, user: impl Into<String>) -> Self {
-        self.user = Some(user.into());
-        self
-    }
-
-    fn with_server_id(mut self, id: impl Into<String>) -> Self {
-        self.server_id = Some(id.into());
-        self
-    }
-}
-
-// Factory methods /////////////////////////////////////////////////////////////
-
-impl P4Change {
-    /// p4 change -d [-f -s -O] changelist
-    pub fn for_delete(changelist_id: u64) -> P4ChangeDelete {
-        P4LensedCmd::new(P4Change {
-            changelist_id: Some(changelist_id),
-            delete: true,
-            ..Default::default()
-        })
-    }
-
-    /// p4 change -o [-s] [-f] [[-O|-I] changelist]
-    pub fn for_read(changelist_id: Option<u64>) -> P4ChangeRead {
-        P4LensedCmd::new(P4Change {
-            changelist_id,
-            ..Default::default()
-        })
-    }
-
-    /// p4 change -i [-s] [-f | -u]
-    pub fn for_submit() -> P4ChangeSubmit {
-        P4LensedCmd::new(P4Change::default())
-    }
-
-    /// p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
-    pub fn for_set_type(changelist_id: u64, vis: ChangeVisibility) -> P4ChangeSetType {
-        P4LensedCmd::new(P4Change {
-            changelist_id: Some(changelist_id),
-            change_type: Some(vis),
-            ..Default::default()
-        })
-    }
-
-    /// p4 change -U user [-t restricted|public] [-f] changelist
-    pub fn for_set_user(changelist_id: u64, user: impl Into<String>) -> P4ChangeSetUser {
-        P4LensedCmd::new(P4Change {
-            changelist_id: Some(changelist_id),
-            user: Some(user.into()),
-            ..Default::default()
-        })
-    }
-
-    /// p4 change -d -f --serverid=X changelist
-    pub fn for_cross_server_delete(
-        changelist_id: u64,
-        server_id: impl Into<String>,
-    ) -> P4ChangeCrossServerDelete {
-        P4LensedCmd::new(P4Change {
-            changelist_id: Some(changelist_id),
-            delete: true,
-            force: true,
-            server_id: Some(server_id.into()),
-            ..Default::default()
-        })
-    }
-
-    /// Unrestricted builder with all flags available.
-    /// Use `.into_cmd()` to obtain the inner command for execution.
-    pub fn wild_west() -> P4ChangeWild {
-        P4LensedCmd::new(P4Change::default())
-    }
-}
-
-// Modes & Lensed builder passthroughs per mode ////////////////////////////////
-
-// p4 change -d [-f -s -O] changelist
-p4_lens!(P4ChangeDelete, ChangeDelete, P4Change, P4RunEager);
-impl P4ChangeDelete {
-    p4_expose_many!(
-        with_force;
-        with_arbitrary_job_status;
-        with_as_pre_submit_changelist_id;
-    );
-}
-
-// p4 change -o [-s] [-f] [[-O|-I] changelist]
-p4_lens!(P4ChangeRead, ChangeRead, P4Change, P4RunRead);
-impl P4ChangeRead {
-    p4_expose_many!(
-        with_arbitrary_job_status;
-        with_force;
-        with_as_pre_submit_changelist_id;
-        with_as_identity_changelist_id;
-    );
-}
-
-// p4 change -i [-s] [-f | -u]
-p4_lens!(P4ChangeSubmit, ChangeSubmit, P4Change, P4RunSubmit);
-impl P4ChangeSubmit {
-    p4_expose_many!(
-        with_arbitrary_job_status;
-        with_force;
-        with_update;
-    );
-}
-
-// p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
-p4_lens!(P4ChangeSetType, ChangeSetType, P4Change, P4RunEager);
-impl P4ChangeSetType {
-    p4_expose_many!(
-        with_user, user: String;
-        with_force;
-        with_update;
-        with_as_pre_submit_changelist_id;
-        with_as_identity_changelist_id;
-    );
-}
-
-// p4 change -U user [-t restricted|public] [-f] changelist
-p4_lens!(P4ChangeSetUser, ChangeSetUser, P4Change, P4RunEager);
-impl P4ChangeSetUser {
-    p4_expose_many!(
-        with_change_type, vis: ChangeVisibility;
-        with_force;
-    );
-}
-
-// p4 change -d -f --serverid=X changelist
-p4_lens!(P4ChangeCrossServerDelete, ChangeCrossServerDelete, P4Change, P4RunEager);
-// nothing to expose here, all variables already set.
-
-// Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
-p4_lens!(P4ChangeWild, ChangeWild, P4Change, P4RunManual);
-impl P4ChangeWild {
-    p4_expose_many!(
-        with_changelist_id, id: u64;
-        with_force;
-        with_update;
-        with_arbitrary_job_status;
-        with_as_pre_submit_changelist_id;
-        with_as_identity_changelist_id;
-        with_change_type, vis: ChangeVisibility;
-        with_user, user: String;
-        with_server_id, id: String;
-    );
 }
 
 // Trait impls /////////////////////////////////////////////////////////////////
@@ -339,6 +130,208 @@ impl P4FormCmd for P4Change {
             .and_then(|s| s.parse().ok())
             .ok_or(P4Error::ParseError(raw))
     }
+}
+
+// Command Builders ////////////////////////////////////////////////////////////
+
+#[derive(Debug, Clone, Copy)]
+pub enum ChangeVisibility {
+    Restricted,
+    Public,
+}
+
+impl ChangeVisibility {
+    fn as_str(&self) -> &str {
+        match self {
+            ChangeVisibility::Restricted => "restricted",
+            ChangeVisibility::Public => "public",
+        }
+    }
+}
+
+impl P4Change {
+    fn with_changelist_id(mut self, id: u64) -> Self {
+        self.changelist_id = Some(id);
+        self
+    }
+
+    fn with_force(mut self) -> Self {
+        self.force = true;
+        self
+    }
+
+    fn with_update(mut self) -> Self {
+        self.update = true;
+        self
+    }
+
+    fn with_arbitrary_job_status(mut self) -> Self {
+        self.arbitrary_job_status = true;
+        self
+    }
+
+    fn with_as_pre_submit_changelist_id(mut self) -> Self {
+        self.as_pre_submit_changelist_id = true;
+        self
+    }
+
+    fn with_as_identity_changelist_id(mut self) -> Self {
+        self.as_identity_changelist_id = true;
+        self
+    }
+
+    fn with_change_type(mut self, vis: ChangeVisibility) -> Self {
+        self.change_type = Some(vis);
+        self
+    }
+
+    fn with_user(mut self, user: impl Into<String>) -> Self {
+        self.user = Some(user.into());
+        self
+    }
+
+    fn with_server_id(mut self, id: impl Into<String>) -> Self {
+        self.server_id = Some(id.into());
+        self
+    }
+}
+
+// Modes & Lensed builder passthroughs per mode ////////////////////////////////
+
+// p4 change -d [-f -s -O] changelist
+p4_lens!(P4ChangeDelete, ChangeDelete, P4Change, P4RunEager);
+impl P4Change {
+    pub fn for_delete(changelist_id: u64) -> P4ChangeDelete {
+        P4LensedCmd::new(P4Change {
+            changelist_id: Some(changelist_id),
+            delete: true,
+            ..Default::default()
+        })
+    }
+}
+impl P4ChangeDelete {
+    p4_expose_many!(
+        with_force;
+        with_arbitrary_job_status;
+        with_as_pre_submit_changelist_id;
+    );
+}
+
+// p4 change -o [-s] [-f] [[-O|-I] changelist]
+p4_lens!(P4ChangeRead, ChangeRead, P4Change, P4RunRead);
+impl P4Change {
+    pub fn for_read(changelist_id: Option<u64>) -> P4ChangeRead {
+        P4LensedCmd::new(P4Change {
+            changelist_id,
+            ..Default::default()
+        })
+    }
+}
+impl P4ChangeRead {
+    p4_expose_many!(
+        with_arbitrary_job_status;
+        with_force;
+        with_as_pre_submit_changelist_id;
+        with_as_identity_changelist_id;
+    );
+}
+
+// p4 change -i [-s] [-f | -u]
+p4_lens!(P4ChangeSubmit, ChangeSubmit, P4Change, P4RunSubmit);
+impl P4Change {
+    pub fn for_submit() -> P4ChangeSubmit {
+        P4LensedCmd::new(P4Change::default())
+    }
+}
+impl P4ChangeSubmit {
+    p4_expose_many!(
+        with_arbitrary_job_status;
+        with_force;
+        with_update;
+    );
+}
+
+// p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
+p4_lens!(P4ChangeSetType, ChangeSetType, P4Change, P4RunEager);
+impl P4Change {
+    pub fn for_set_type(changelist_id: u64, vis: ChangeVisibility) -> P4ChangeSetType {
+        P4LensedCmd::new(P4Change {
+            changelist_id: Some(changelist_id),
+            change_type: Some(vis),
+            ..Default::default()
+        })
+    }
+}
+impl P4ChangeSetType {
+    p4_expose_many!(
+        with_user, user: String;
+        with_force;
+        with_update;
+        with_as_pre_submit_changelist_id;
+        with_as_identity_changelist_id;
+    );
+}
+
+// p4 change -U user [-t restricted|public] [-f] changelist
+p4_lens!(P4ChangeSetUser, ChangeSetUser, P4Change, P4RunEager);
+impl P4Change {
+    pub fn for_set_user(changelist_id: u64, user: impl Into<String>) -> P4ChangeSetUser {
+        P4LensedCmd::new(P4Change {
+            changelist_id: Some(changelist_id),
+            user: Some(user.into()),
+            ..Default::default()
+        })
+    }
+}
+impl P4ChangeSetUser {
+    p4_expose_many!(
+        with_change_type, vis: ChangeVisibility;
+        with_force;
+    );
+}
+
+// p4 change -d -f --serverid=X changelist
+p4_lens!(
+    P4ChangeCrossServerDelete,
+    ChangeCrossServerDelete,
+    P4Change,
+    P4RunEager
+);
+impl P4Change {
+    pub fn for_cross_server_delete(
+        changelist_id: u64,
+        server_id: impl Into<String>,
+    ) -> P4ChangeCrossServerDelete {
+        P4LensedCmd::new(P4Change {
+            changelist_id: Some(changelist_id),
+            delete: true,
+            force: true,
+            server_id: Some(server_id.into()),
+            ..Default::default()
+        })
+    }
+}
+// nothing to expose here, all variables already set.
+
+// Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
+p4_lens!(P4ChangeWild, ChangeWild, P4Change, P4RunManual);
+impl P4Change {
+    pub fn wild_west() -> P4ChangeWild {
+        P4LensedCmd::new(P4Change::default())
+    }
+}
+impl P4ChangeWild {
+    p4_expose_many!(
+        with_changelist_id, id: u64;
+        with_force;
+        with_update;
+        with_arbitrary_job_status;
+        with_as_pre_submit_changelist_id;
+        with_as_identity_changelist_id;
+        with_change_type, vis: ChangeVisibility;
+        with_user, user: String;
+        with_server_id, id: String;
+    );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
