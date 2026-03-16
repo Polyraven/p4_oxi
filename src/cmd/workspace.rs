@@ -214,8 +214,27 @@ impl P4Workspace {
 
 // Modes & Lensed builder passthroughs per mode ////////////////////////////////
 
+// Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
+p4_lens!(P4WorkspaceWild, P4Workspace, WorkspaceWild, P4RunNone);
+impl P4Workspace {
+    pub fn wild_west() -> P4WorkspaceWild {
+        P4LensedCmd::new(P4Workspace::default())
+    }
+}
+impl P4WorkspaceWild {
+    p4_expose!(with_name, name: String);
+    p4_expose!(with_force);
+    p4_expose!(with_template, template: String);
+    p4_expose!(with_workspace_type, wt: P4WorkspaceType);
+    p4_expose!(with_stream, stream: String);
+    p4_expose!(with_at_change, change: u64);
+    p4_expose!(with_server_id, id: String);
+    p4_expose!(with_shelved_policy, policy: P4WorkspaceShelvedPolicy);
+    p4_expose!(with_force_shelved_keep);
+}
+
 // p4 client -o [-t template] [-T type] [-S stream [-c change]] [name]
-p4_lens!(P4WorkspaceRead, WorkspaceRead, P4Workspace, P4RunRead);
+p4_lens!(P4WorkspaceRead, P4Workspace, WorkspaceRead, P4RunRead);
 impl P4Workspace {
     pub fn for_read(name: Option<&str>) -> P4WorkspaceRead {
         P4LensedCmd::new(P4Workspace {
@@ -225,16 +244,14 @@ impl P4Workspace {
     }
 }
 impl P4WorkspaceRead {
-    p4_expose_many!(
-        with_template, template: String;
-        with_workspace_type, wt: P4WorkspaceType;
-        with_stream, stream: String;
-        with_at_change, change: u64;
-    );
+    p4_expose!(with_template, template: String);
+    p4_expose!(with_workspace_type, wt: P4WorkspaceType);
+    p4_expose!(with_stream, stream: String);
+    p4_expose!(with_at_change, change: u64);
 }
 
 // p4 client -i [-f]
-p4_lens!(P4WorkspaceSubmit, WorkspaceSubmit, P4Workspace, P4RunSubmit);
+p4_lens!(P4WorkspaceSubmit, P4Workspace, WorkspaceSubmit, P4RunSubmit);
 impl P4Workspace {
     pub fn for_submit() -> P4WorkspaceSubmit {
         P4LensedCmd::new(P4Workspace::default())
@@ -245,7 +262,7 @@ impl P4WorkspaceSubmit {
 }
 
 // p4 client -d [-f [-Fs|-Fd]] name
-p4_lens!(P4WorkspaceDelete, WorkspaceDelete, P4Workspace, P4RunEager);
+p4_lens!(P4WorkspaceDelete, P4Workspace, WorkspaceDelete, P4RunEager);
 impl P4Workspace {
     pub fn for_delete(name: impl Into<String>) -> P4WorkspaceDelete {
         P4LensedCmd::new(P4Workspace {
@@ -266,8 +283,8 @@ impl P4WorkspaceDelete {
 // p4 client -d -f [-Fs|-Fd] name
 p4_lens!(
     P4WorkspaceForcedDelete,
-    WorkspaceForcedDelete,
     P4Workspace,
+    WorkspaceForcedDelete,
     P4RunEager
 );
 impl P4WorkspaceForcedDelete {
@@ -277,8 +294,8 @@ impl P4WorkspaceForcedDelete {
 // p4 client -s [-f] -S stream [name]
 p4_lens!(
     P4WorkspaceSwitchStream,
-    WorkspaceSwitchStream,
     P4Workspace,
+    WorkspaceSwitchStream,
     P4RunEager
 );
 impl P4Workspace {
@@ -291,17 +308,15 @@ impl P4Workspace {
     }
 }
 impl P4WorkspaceSwitchStream {
-    p4_expose_many!(
-        with_force;
-        with_name, name: String;
-    );
+    p4_expose!(with_force);
+    p4_expose!(with_name, name: String);
 }
 
 // p4 client -s [-f] -t template [name]
 p4_lens!(
     P4WorkspaceSwitchTemplate,
-    WorkspaceSwitchTemplate,
     P4Workspace,
+    WorkspaceSwitchTemplate,
     P4RunEager
 );
 impl P4Workspace {
@@ -314,17 +329,15 @@ impl P4Workspace {
     }
 }
 impl P4WorkspaceSwitchTemplate {
-    p4_expose_many!(
-        with_force;
-        with_name, name: String;
-    );
+    p4_expose!(with_force);
+    p4_expose!(with_name, name: String);
 }
 
 // p4 client -d -f --serverid=X [-Fs] name
 p4_lens!(
     P4WorkspaceCrossServerDelete,
-    WorkspaceCrossServerDelete,
     P4Workspace,
+    WorkspaceCrossServerDelete,
     P4RunEager
 );
 impl P4Workspace {
@@ -343,27 +356,6 @@ impl P4Workspace {
 }
 impl P4WorkspaceCrossServerDelete {
     p4_expose!(with_force_shelved_keep);
-}
-
-// Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
-p4_lens!(P4WorkspaceWild, WorkspaceWild, P4Workspace, P4RunManual);
-impl P4Workspace {
-    pub fn wild_west() -> P4WorkspaceWild {
-        P4LensedCmd::new(P4Workspace::default())
-    }
-}
-impl P4WorkspaceWild {
-    p4_expose_many!(
-        with_name, name: String;
-        with_force;
-        with_template, template: String;
-        with_workspace_type, wt: P4WorkspaceType;
-        with_stream, stream: String;
-        with_at_change, change: u64;
-        with_server_id, id: String;
-        with_shelved_policy, policy: P4WorkspaceShelvedPolicy;
-        with_force_shelved_keep;
-    );
 }
 
 ////////////////////////////////////////////////////////////////////////////////

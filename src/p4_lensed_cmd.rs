@@ -32,8 +32,8 @@ impl P4RunMode for P4RunRead {}
 
 /// No terminal methods. Used by `wild_west()` builders where the user must
 /// call `.into_cmd()` to obtain the inner command and execute via trait methods.
-pub struct P4RunManual;
-impl P4RunMode for P4RunManual {}
+pub struct P4RunNone;
+impl P4RunMode for P4RunNone {}
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -86,18 +86,10 @@ macro_rules! p4_expose {
 /// Declares a single lensed command mode: the marker struct, its P4CmdMode impl, and the type alias.
 /// Place directly above the corresponding `impl` block for that alias.
 macro_rules! p4_lens {
-    ($alias:ident, $mode:ident, $cmd:ty, $run:ty) => {
+    ($alias:ident, $cmd:ty, $mode:ident, $run:ty) => {
         pub struct $mode;
         impl P4CmdMode for $mode {}
         type $alias = P4LensedCmd<$cmd, $mode, $run>;
-    };
-}
-
-/// Exposes multiple builder methods in one block. Semicolon-separated
-/// (because with-arg variants contain commas).
-macro_rules! p4_expose_many {
-    ($( $method:ident $(, $arg:ident : $ty:ty )* );+ $(;)?) => {
-        $( p4_expose!($method $(, $arg : $ty)*); )+
     };
 }
 
