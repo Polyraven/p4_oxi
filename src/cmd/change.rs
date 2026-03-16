@@ -202,27 +202,35 @@ impl P4Change {
 
 // Modes & Lensed builder passthroughs per mode ////////////////////////////////
 
-p4_cmd_modes!(
-    P4Change,
-    [
-        // p4 change -d [-f -s -O] changelist
-        (P4ChangeDelete, ChangeDelete, P4RunEager),
-        // p4 change -o [-s] [-f] [[-O|-I] changelist]
-        (P4ChangeRead, ChangeRead, P4RunRead),
-        // p4 change -i [-s] [-f | -u]
-        (P4ChangeSubmit, ChangeSubmit, P4RunSubmit),
-        // p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
-        (P4ChangeSetType, ChangeSetType, P4RunEager),
-        // p4 change -U user [-t restricted|public] [-f] changelist
-        (P4ChangeSetUser, ChangeSetUser, P4RunEager),
-        // p4 change -d -f --serverid=X changelist
-        (
-            P4ChangeCrossServerDelete,
-            ChangeCrossServerDelete,
-            P4RunEager
-        ),
-    ]
-);
+// p4 change -d [-f -s -O] changelist
+pub struct ChangeDelete;
+impl P4CmdMode for ChangeDelete {}
+pub type P4ChangeDelete = P4LensedCmd<P4Change, ChangeDelete, P4RunEager>;
+
+// p4 change -o [-s] [-f] [[-O|-I] changelist]
+pub struct ChangeRead;
+impl P4CmdMode for ChangeRead {}
+pub type P4ChangeRead = P4LensedCmd<P4Change, ChangeRead, P4RunRead>;
+
+// p4 change -i [-s] [-f | -u]
+pub struct ChangeSubmit;
+impl P4CmdMode for ChangeSubmit {}
+pub type P4ChangeSubmit = P4LensedCmd<P4Change, ChangeSubmit, P4RunSubmit>;
+
+// p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
+pub struct ChangeSetType;
+impl P4CmdMode for ChangeSetType {}
+pub type P4ChangeSetType = P4LensedCmd<P4Change, ChangeSetType, P4RunEager>;
+
+// p4 change -U user [-t restricted|public] [-f] changelist
+pub struct ChangeSetUser;
+impl P4CmdMode for ChangeSetUser {}
+pub type P4ChangeSetUser = P4LensedCmd<P4Change, ChangeSetUser, P4RunEager>;
+
+// p4 change -d -f --serverid=X changelist
+pub struct ChangeCrossServerDelete;
+impl P4CmdMode for ChangeCrossServerDelete {}
+pub type P4ChangeCrossServerDelete = P4LensedCmd<P4Change, ChangeCrossServerDelete, P4RunEager>;
 
 impl P4ChangeDelete {
     p4_expose!(with_force);

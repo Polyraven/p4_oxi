@@ -271,6 +271,9 @@ pub trait P4FormCmd: Into<P4RawCmd> {
         Self::parse_form_submit_raw_output(raw_output)
     }
 
+    /// Parses the raw stdout from a form submission into the desired output type.
+    /// The format of this output varies per command and is not formally documented.
+    /// When unsure, use `String` as `FormSubmitOutput` and return `Ok(raw_output)`.
     fn parse_form_submit_raw_output(raw_output: String) -> Result<Self::FormSubmitOutput, P4Error>;
 }
 
