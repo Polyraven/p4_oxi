@@ -6,40 +6,62 @@ use serde::Deserialize;
 
 use crate::*;
 
-#[derive(Default, Debug)]
-/// Argument builder for the info command.
+// Command struct //////////////////////////////////////////////////////////////
+
+#[derive(Debug, Clone, Default)]
 pub struct P4Info {
-    /// exclude information (for example, the workspace root) that requires a database lookup.
-    shortened: bool,
+    shortened: bool, // -s
 }
 
-#[allow(non_snake_case, dead_code)]
-#[derive(Deserialize, Debug, Clone)]
+// Output //////////////////////////////////////////////////////////////////////
+
+#[derive(Deserialize, Debug, Clone, Default)]
+#[serde(default, rename_all = "camelCase")]
 pub struct P4InfoOut {
-    pub clientHost: String,
-    pub clientCwd: String,
-    pub clientName: String,
-    pub clientRoot: String,
-    pub clientStream: String,
-    pub serverAddress: String,
-    pub userName: String,
-    pub serverVersion: Option<String>,
-    pub clientVersion: Option<String>,
-    // Fixme: not complete
+    pub user_name: String,
+    pub client_name: String,
+    pub client_host: String,
+    pub client_cwd: String,
+    pub client_root: String,
+    pub client_stream: String,
+    pub peer_address: String,
+    pub client_address: String,
+    pub server_address: String,
+    pub server_root: String,
+    pub server_date: String,
+    pub server_uptime: String,
+    pub server_version: String,
+    pub server_license: String,
+    pub server_services: String,
+    pub case_handling: String,
+    pub client_version: String,
 }
+
+// Trait impls /////////////////////////////////////////////////////////////////
 
 impl From<P4Info> for P4RawCmd {
     fn from(value: P4Info) -> Self {
-        let mut p4_cmd = P4RawCmd::new("info");
+        let mut raw = P4RawCmd::new("info");
 
         if value.shortened {
-            p4_cmd = p4_cmd.with_arg("-s");
-        };
+            raw = raw.with_arg("-s");
+        }
 
-        p4_cmd
+        raw
     }
 }
 
 impl P4Cmd for P4Info {
     type Output = P4InfoOut;
 }
+
+// Command Builders ////////////////////////////////////////////////////////////
+
+impl P4Info {
+    pub fn with_shortened(mut self) -> Self {
+        self.shortened = true;
+        self
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
