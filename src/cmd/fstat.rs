@@ -2,6 +2,8 @@
 //!
 //! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat>
 
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use crate::*;
@@ -21,7 +23,7 @@ pub struct P4FStat {
     attribute_pattern: Option<String>,   // -A pattern
     include_unload: bool,                // -U
     stream_views: bool,                  // --streamviews
-    output_opts: Vec<P4FStatOutput>,     // -O{x}
+    output_opts: Vec<P4FStatOutputOpt>,  // -O{x}
     restrict_opts: Vec<P4FStatRestrict>, // -R{x}
     sort_opts: Vec<P4FStatSort>,         // -S{x}
 }
@@ -39,23 +41,25 @@ pub struct P4FStatOut {
     pub is_mapped: Option<String>,
 
     // Head revision info (present if file is in depot)
-    pub head_action: Option<String>,
-    pub head_change: Option<String>,
-    pub head_rev: Option<String>,
-    pub head_type: Option<String>,
-    pub head_time: Option<String>,
-    pub head_mod_time: Option<String>,
+    // accessible via .head
+    head_action: Option<String>,
+    head_change: Option<String>,
+    head_rev: Option<String>,
+    head_type: Option<String>,
+    head_time: Option<String>,
+    head_mod_time: Option<String>,
 
     // Workspace sync info
     pub have_rev: Option<String>,
 
     // Open file info (present if opened in workspace)
-    pub action: Option<String>,
-    pub change: Option<String>,
+    // accessible via .opened
+    action: Option<String>,
+    change: Option<String>,
     #[serde(rename = "type")]
-    pub file_type: Option<String>,
-    pub action_owner: Option<String>,
-    pub work_rev: Option<String>,
+    file_type: Option<String>,
+    action_owner: Option<String>,
+    work_rev: Option<String>,
 
     // Resolve info
     pub resolved: Option<String>,
@@ -81,10 +85,61 @@ pub struct P4FStatOut {
     pub path: Option<String>,
     pub path_source: Option<String>,
     pub path_type: Option<String>,
-    pub path_permission: Option<String>,
+    pub path_permissions: Option<String>,
 
     // Component info
     pub effective_component_type: Option<String>,
+
+    #[serde(flatten)]
+    #[allow(dead_code)]
+    unhandled: HashMap<String, String>,
+}
+
+#[derive(Debug)]
+pub struct P4FstatOutHead {
+    pub action: String,
+    pub change: u64,
+    pub rev: u64,
+    pub action_type: String,
+    pub time: u64,
+    pub mod_time: u64,
+}
+
+#[derive(Debug)]
+pub struct P4FstatOutOpened {
+    // TODO
+}
+
+#[derive(Debug)]
+pub struct P4FstatOtherOpen {
+    pub action: String,     // otherAction0
+    pub changelist_id: u64, // otherChange0
+    pub user: String,       // otherOpen0
+}
+
+impl P4FStatOut {
+    // Head (depot) revision info (None if file is not on depot)
+    pub fn head(&self) -> Option<P4FstatOutHead> {
+        self.head_action.as_ref().map(|_| P4FstatOutHead {
+            action: self.head_action.clone().unwrap_or_default(),
+            change: super::parse_or_default(self.head_change.clone()),
+            rev: super::parse_or_default(self.head_rev.clone()),
+            action_type: self.head_type.clone().unwrap_or_default(),
+            time: super::parse_or_default(self.head_time.clone()),
+            mod_time: super::parse_or_default(self.head_mod_time.clone()),
+        })
+    }
+
+    // Open file info (none if not opened in workspace)
+    pub fn opened(&self) -> Option<P4FstatOutOpened> {
+        todo!()
+    }
+
+    // Info about other people who have the file checked out or locked
+    pub fn other_open(&self) -> Vec<P4FstatOtherOpen> {
+        // self.other_open has the count while self.unhandled, keys have to be constructed.
+        todo!()
+    }
 }
 
 // Trait impls /////////////////////////////////////////////////////////////////
@@ -137,7 +192,6 @@ impl From<P4FStat> for P4RawCmd {
             raw = raw.with_arg(format!("-S{suffix}"));
         }
 
-        // wildcards go last (positional)
         raw.wildcards = value.wildcards;
 
         raw
@@ -152,7 +206,7 @@ impl P4Cmd for P4FStat {
 
 /// Sub-flags for `-O{x}` controlling what extra data fstat outputs.
 #[derive(Debug, Clone, Copy)]
-pub enum P4FStatOutput {
+pub enum P4FStatOutputOpt {
     /// `-Ob` Archive file path, revision, type, and local paths.
     Archive,
     /// `-Od` MD5 digest of attribute values.
@@ -177,7 +231,7 @@ pub enum P4FStatOutput {
     GlobalLock,
 }
 
-impl P4FStatOutput {
+impl P4FStatOutputOpt {
     fn as_char(&self) -> char {
         match self {
             Self::Archive => 'b',
@@ -257,9 +311,9 @@ impl P4FStatSort {
 
 impl P4FStat {
     pub fn of_one(wildcard: impl Into<String>) -> Self {
+        // TODO: if this is a wildcard here still it may return multiple values.
         Self {
             wildcards: vec![wildcard.into()],
-            max: Some(1),
             ..Default::default()
         }
     }
@@ -321,7 +375,7 @@ impl P4FStat {
         self
     }
 
-    pub fn with_output(mut self, opt: P4FStatOutput) -> Self {
+    pub fn with_output(mut self, opt: P4FStatOutputOpt) -> Self {
         self.output_opts.push(opt);
         self
     }

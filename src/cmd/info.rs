@@ -2,6 +2,8 @@
 //!
 //! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_info.html#p4_info>
 
+use std::collections::HashMap;
+
 use serde::Deserialize;
 
 use crate::*;
@@ -35,6 +37,10 @@ pub struct P4InfoOut {
     pub server_services: String,
     pub case_handling: String,
     pub client_version: String,
+
+    #[serde(flatten)]
+    #[allow(dead_code)]
+    unhandled: HashMap<String, String>,
 }
 
 // Trait impls /////////////////////////////////////////////////////////////////
