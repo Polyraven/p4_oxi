@@ -2,6 +2,12 @@
 name = "p4_oxi"
 version = "0.1.0"
 edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Unofficial Perforce (Helix / P4) version control system wrapper."
+repository = "https://github.com/Polyraven/p4_oxi"
+readme = "README.md"
+keywords = ["perforce", "p4", "vcs", "helix"]
+categories = ["api-bindings"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
