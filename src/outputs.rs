@@ -1,6 +1,14 @@
 //! Common structs for deserializable output responses of the commands.
-use serde::Deserialize;
+//! TODO: It should be probably moved to cmd sub-crate in the future.
 
+use serde::Deserialize;
+/// TODO: meant to be the output of a number of different formats,
+/// like:
+/// - p4 sync
+/// - p4 clean
+/// - p4 flush (sync without file transfer)
+/// - p4 reconcile (though reconcile adds extra fields like fromFile)
+/// - p4 populate
 #[allow(non_snake_case, dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct FileAction {
@@ -12,6 +20,9 @@ pub struct FileAction {
     // Fixme: not complete
 }
 
+/// TODO: Should be an output of P4Clients / P4Workspaces in the future
+/// Not to confuse it with the form of P4Workspace and P4Client
+/// conversion may be desired, unclear if it can be shared by multiple commands
 #[allow(non_snake_case, dead_code)]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Workspace {

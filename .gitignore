@@ -2,3 +2,4 @@
 *secret*
 *.lock
 /p4_cmd_ref
+codebook.toml

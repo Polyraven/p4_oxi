@@ -106,12 +106,13 @@ pub struct P4FstatOutHead {
 }
 
 #[derive(Debug)]
-pub struct P4FstatOutOpened {
+struct _P4FstatOutOpened {
     // TODO
 }
 
 #[derive(Debug)]
-pub struct P4FstatOtherOpen {
+struct _P4FstatOtherOpen {
+    // TODO
     pub action: String,     // otherAction0
     pub changelist_id: u64, // otherChange0
     pub user: String,       // otherOpen0
@@ -130,13 +131,13 @@ impl P4FStatOut {
         })
     }
 
-    // Open file info (none if not opened in workspace)
-    pub fn opened(&self) -> Option<P4FstatOutOpened> {
+    // TODO: Open file info (none if not opened in workspace)
+    fn _opened(&self) -> Option<_P4FstatOutOpened> {
         todo!()
     }
 
-    // Info about other people who have the file checked out or locked
-    pub fn other_open(&self) -> Vec<P4FstatOtherOpen> {
+    // TODO: Info about other people who have the file checked out or locked
+    fn _other_open(&self) -> Vec<_P4FstatOtherOpen> {
         // self.other_open has the count while self.unhandled, keys have to be constructed.
         todo!()
     }
