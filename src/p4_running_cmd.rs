@@ -1,16 +1,14 @@
 //! Defines the various command runners which is using the typestate decorator pattern.
 //!
-//! Here us what's happening
-//! When .run() is called on a P4RawCmd it first creates an IterCmd
+//! When `.run()` is called on a `P4RawCmd` it creates a `RunningIterCmd`.
 //!
 //! The full chain:
-//!     RunningIterCmd -> P4RunningCmd -> P4TypedRunningCmd
+//!     `RunningIterCmd` -> `P4RunningCmd` -> `P4TypedRunningCmd`
 //!
 //! How it works:
-//! The RunningIterCmd outputs raw data without any processing.
-//! The P4RunningCmd splits the content from warnings (which are returned as P4Message) # TODO rename it to P4Error
-//! The P4TypedRunningCmd can be created from this using the .cast() method
-//! That in the end will make each content to be deserialized to a concrete type.
+//! - `RunningIterCmd` outputs raw data without any processing.
+//! - `P4RunningCmd` categorizes output into [`P4Out`] variants (content, warnings, info, failures).
+//! - `P4TypedRunningCmd` deserializes each content item to a concrete type `T`.
 
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
@@ -18,12 +16,9 @@ use std::marker::PhantomData;
 use crate::iter_cmd::RunningIterCmd;
 use crate::p4_out::{Failure, InfoMessage, P4Out, ParseError, WarningMessage};
 
-/// An iterator over a running command that categorizes the output messages between content and warnings.
+/// An iterator over a running command that categorizes the output into [`P4Out`] variants.
 ///
-/// It emits Result<String, P4Message>
-/// Where:
-///     String: content in raw format
-///     P4Message: warnings and various error messages
+/// Yields [`P4Out<String>`] where content is in raw (unparsed) format.
 pub struct P4RunningCmd {
     pub inner_iter_cmd: RunningIterCmd,
 }
@@ -65,13 +60,9 @@ impl Iterator for P4RunningCmd {
     }
 }
 
-/// A type bound iterator over a running command that deserializes each output to the type it is bound to.
+/// A typed iterator over a running command that deserializes each content item to `T`.
 ///
-/// It emits Result<T, P4Message>
-/// Where:
-///     - T is the successfully deserialized content
-///     - P4Message warnings and various error messages
-///
+/// Yields [`P4Out<T>`] where content items are deserialized from JSON.
 pub struct P4TypedRunningCmd<T> {
     inner_p4_running_cmd: P4RunningCmd,
     _phantom: PhantomData<T>,

@@ -109,7 +109,7 @@ impl<T> P4Out<T> {
         }
     }
 
-    /// Discards the content type, used when storing non-content variants in [`P4Error`].
+    /// Discards the content type, used when storing non-content variants in [`P4Error`](crate::error::P4Error).
     pub fn erase_content_type(self) -> P4Out<()> {
         match self {
             P4Out::Content(_) => P4Out::Content(()),

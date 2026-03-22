@@ -35,7 +35,7 @@ use crate::{
 ///
 ///
 /// CmdRef documentation:
-/// https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html
+/// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html>
 #[derive(Default)]
 pub struct P4RawCmd {
     pub g_option: GlobalOptions,
@@ -188,9 +188,10 @@ impl From<P4RawCmd> for IterCmd {
 /// Trait for commands that deserialize the server output to the specified output type.
 ///
 /// To make these methods available on a command one would add this during implementation:
-/// ```rust, no_run
+/// ```rust,ignore
 /// impl P4Cmd for P4FStat {
 ///    type Output = P4FStatOut;
+/// }
 /// ```
 ///
 /// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
