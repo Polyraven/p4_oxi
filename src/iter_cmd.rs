@@ -1,4 +1,5 @@
-///! Thin wrapper around std::process that makes subprocess call execute as iterators.
+//! Thin wrapper around std::process that makes subprocess call execute as iterators.
+
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Lines, Write};
 use std::process::{Child, ChildStderr, ChildStdout, Command, Stdio};
@@ -112,7 +113,7 @@ impl IterCmd {
         };
 
         Ok(RunningIterCmd {
-            pipe: pipe,
+            pipe,
             stdout: BufReader::new(stdout_handler).lines(),
             stderr: BufReader::new(stderr_handler).lines(),
             end_reached: false,

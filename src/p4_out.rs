@@ -2,16 +2,16 @@
 
 use serde::Deserialize;
 
-/// Deserializes and utility functions to help deal with p4 command warnings
+/// A warning message from the P4 server.
+///
 /// For any command that has any kind of errors it will respond with a message as such:
 /// ```json
 /// {"data":"<wildcard> - file(s) up-to-date.\n","generic":17,"severity":2}
 /// ```
-/// These messages still let p4 continue it's execution.
-/// But listening to these gives the oportunity to react to these.
-/// Thus is why this implementation listen to these in the handler
+/// These messages still let p4 continue its execution.
+/// Listening to these gives the opportunity to react to them.
 #[derive(Debug, Deserialize)]
-pub struct WarningMessage {
+pub struct P4WarningMessage {
     /// will contain the wildcard and the reason in failed
     pub data: String,
     /// the function of this is unknown
@@ -20,37 +20,66 @@ pub struct WarningMessage {
     pub severity: i32,
 }
 
-impl WarningMessage {}
-
 /// When P4 won't do something with a file yet it's not really a problem it will output a message like so:
 /// ```json
 /// {"data":"<file_path> - must resolve #3 before submitting","level":1}
 /// ```
 /// There is an option to register a handler for these as well
 #[derive(Debug, Deserialize)]
-pub struct InfoMessage {
+pub struct P4InfoMessage {
     pub data: String,
     pub level: i32,
 }
 
 #[derive(Debug)]
-pub struct ParseError {
+pub struct P4ParseError {
     pub data: String,
     pub error: String,
 }
 
 #[derive(Debug)]
-pub struct Failure {
+pub struct P4Failure {
     pub data: String,
 }
 
 #[derive(Debug)]
 pub enum P4Out<T> {
     Content(T),
-    Warning(WarningMessage),
-    Info(InfoMessage),
-    Failure(Failure),
-    ParseError(ParseError),
+    Warning(P4WarningMessage),
+    Info(P4InfoMessage),
+    Failure(P4Failure),
+    ParseError(P4ParseError),
+}
+
+impl std::fmt::Display for P4WarningMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::fmt::Display for P4InfoMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+
+impl std::fmt::Display for P4ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::fmt::Display for P4Failure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Display for P4Out<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl<T> P4Out<T> {
@@ -81,28 +110,28 @@ impl<T> P4Out<T> {
         }
     }
 
-    pub fn take_warning(self) -> Option<WarningMessage> {
+    pub fn take_warning(self) -> Option<P4WarningMessage> {
         match self {
             P4Out::Warning(v) => Some(v),
             _ => None,
         }
     }
 
-    pub fn take_info(self) -> Option<InfoMessage> {
+    pub fn take_info(self) -> Option<P4InfoMessage> {
         match self {
             P4Out::Info(v) => Some(v),
             _ => None,
         }
     }
 
-    pub fn take_failure(self) -> Option<Failure> {
+    pub fn take_failure(self) -> Option<P4Failure> {
         match self {
             P4Out::Failure(v) => Some(v),
             _ => None,
         }
     }
 
-    pub fn take_parse_error(self) -> Option<ParseError> {
+    pub fn take_parse_error(self) -> Option<P4ParseError> {
         match self {
             P4Out::ParseError(v) => Some(v),
             _ => None,

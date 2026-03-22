@@ -15,13 +15,13 @@ use std::marker::PhantomData;
 
 use crate::error::P4Error;
 use crate::iter_cmd::RunningIterCmd;
-use crate::p4_out::{Failure, InfoMessage, P4Out, ParseError, WarningMessage};
+use crate::p4_out::{P4Failure, P4InfoMessage, P4Out, P4ParseError, P4WarningMessage};
 
 /// An iterator over a running command that categorizes the output into [`P4Out`] variants.
 ///
 /// Yields [`P4Out<String>`] where content is in raw (unparsed) format.
 pub struct P4RunningCmd {
-    pub inner_iter_cmd: RunningIterCmd,
+    pub(crate) inner_iter_cmd: RunningIterCmd,
 }
 
 impl P4RunningCmd {
@@ -69,13 +69,13 @@ impl Iterator for P4RunningCmd {
             };
 
             match value {
-                Err(e) => return Some(P4Out::Failure(Failure { data: e })),
+                Err(e) => return Some(P4Out::Failure(P4Failure { data: e })),
                 Ok(line) => {
-                    if let Ok(warning_message) = serde_json::from_str::<WarningMessage>(&line) {
+                    if let Ok(warning_message) = serde_json::from_str::<P4WarningMessage>(&line) {
                         return Some(P4Out::Warning(warning_message));
                     }
 
-                    if let Ok(info_message) = serde_json::from_str::<InfoMessage>(&line) {
+                    if let Ok(info_message) = serde_json::from_str::<P4InfoMessage>(&line) {
                         return Some(P4Out::Info(info_message));
                     }
 
@@ -123,7 +123,7 @@ impl<T: DeserializeOwned> Iterator for P4TypedRunningCmd<T> {
         match self.inner_p4_running_cmd.next()? {
             P4Out::Content(line) => match serde_json::from_str::<T>(&line) {
                 Ok(val) => Some(P4Out::Content(val)),
-                Err(e) => Some(P4Out::ParseError(ParseError {
+                Err(e) => Some(P4Out::ParseError(P4ParseError {
                     data: line,
                     error: e.to_string(),
                 })),

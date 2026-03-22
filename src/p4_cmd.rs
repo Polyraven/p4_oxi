@@ -1,4 +1,4 @@
-//! Defines core traits and a general wrapper around P4 commands that the whole command system in this crate is built on..
+//! Defines core traits and a general wrapper around P4 commands that the whole command system in this crate is built on.
 
 use serde::{Serialize, de::DeserializeOwned};
 use std::fmt::Debug;
@@ -41,17 +41,16 @@ use crate::{
 /// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/commands.html>
 #[derive(Default)]
 pub struct P4RawCmd {
-    pub g_option: GlobalOptions,
+    pub(crate) g_option: GlobalOptions,
     /// The P4 command that will be executed, like fstat, sync, clean etc.
-    pub cmd: String,
+    pub(crate) cmd: String,
     /// For the arguments that start with a `-`
-    pub args: Vec<String>,
+    pub(crate) args: Vec<String>,
     /// Last argument, needs special validation
-    pub wildcards: Vec<String>,
+    pub(crate) wildcards: Vec<String>,
     /// Serialized form data fed to stdin when submitting forms.
-    pub form_input: Option<String>,
-    ///
-    pub form_action: P4FormAction,
+    pub(crate) form_input: Option<String>,
+    pub(crate) form_action: P4FormAction,
 }
 
 #[derive(Default)]
@@ -161,7 +160,7 @@ impl P4RawCmd {
     ///    .submit_form()?;
     /// ```
     /// Note that forms should implement P4FormCmd and P4RawCmd would not need to be used.
-    /// For reading a form with P4RawCmd use: .with_read_form().run()?.cast::<String>()
+    /// For reading a form with P4RawCmd use: `.with_read_form().run()?.cast::<String>()`
     pub fn submit_form(self) -> Result<String, P4Error> {
         if self.form_input.is_none() || !matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(

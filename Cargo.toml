@@ -14,7 +14,7 @@ mock-p4 = [] # Enables the fake p4 binary for testing: cargo test --features moc
 
 [[bin]]
 name = "fake_p4"
-path = "tests/fake_p4.rs"
+path = "test_utils/fake_p4.rs"
 required-features = ["mock-p4"]
 
 [dependencies]

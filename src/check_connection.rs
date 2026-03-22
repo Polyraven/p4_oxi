@@ -12,17 +12,13 @@ const MIN_JSON_VERSION: P4ClientVersion = P4ClientVersion {
 fn check_p4_client_available_and_compatible() -> Result<(), P4Error> {
     let client_version = P4ClientVersion::get()?;
 
-    if client_version.major > MIN_JSON_VERSION.major {
-        return Ok(());
-    } else if client_version.major == MIN_JSON_VERSION.major
-        && client_version.minor >= MIN_JSON_VERSION.minor
-    {
-        return Ok(());
-    } else {
-        return Err(P4Error::VersionMismatch(format!(
+    if client_version < MIN_JSON_VERSION {
+        Err(P4Error::VersionMismatch(format!(
             "Minimum P4-Cli client version not satisfied: {}.{}",
             MIN_JSON_VERSION.major, MIN_JSON_VERSION.minor
-        )));
+        )))
+    } else {
+        Ok(())
     }
 }
 
