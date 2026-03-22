@@ -13,7 +13,7 @@
 
 #![cfg(feature = "mock-p4")]
 
-use p4_oxi::cmd::{P4Change, P4ChangeForm, P4FStat, P4FStatOut, P4Info, P4InfoOut};
+use p4_oxi::cmd::{P4Change, P4ChangeForm, P4FStat, P4FStatOut, P4Info};
 use p4_oxi::{P4Cmd, P4RawCmd};
 
 struct FakeP4Guard;
@@ -61,21 +61,33 @@ fn raw_multiple_line_output() {
 }
 
 // Typed command pipeline //////////////////////////////////////////////////////
-// Tests: + P4TypedRunningCmd deserialization, P4Cmd trait default methods
+// Tests: + P4TypedRunningCmd deserialization, consumption methods (first, single, finish)
 
 #[test]
 fn cmd_single_result_deserializes() {
     let _guard = FakeP4Guard::setup();
-    let out: P4InfoOut = P4Info::default().single_content().unwrap();
+    let out = P4Info::default()
+        .run()
+        .unwrap()
+        .single()
+        .unwrap()
+        .take_content()
+        .unwrap();
     assert_eq!(out.user_name, "my_user");
     assert_eq!(out.client_name, "my_workspace");
     assert_eq!(out.server_address, "my_server:1666");
 }
 
 #[test]
-fn cmd_first_content_deserializes() {
+fn cmd_first_result_deserializes() {
     let _guard = FakeP4Guard::setup();
-    let out: P4InfoOut = P4Info::default().first_content().unwrap();
+    let out = P4Info::default()
+        .run()
+        .unwrap()
+        .first()
+        .unwrap()
+        .take_content()
+        .unwrap();
     assert_eq!(out.user_name, "my_user");
     assert_eq!(out.client_name, "my_workspace");
     assert_eq!(out.server_address, "my_server:1666");
@@ -130,8 +142,7 @@ fn lensed_form_submit() {
 }
 
 #[test]
-fn lensed_apply() {
+fn lensed_finish() {
     let _guard = FakeP4Guard::setup();
-    let result = P4Change::for_delete(1).apply();
-    assert!(result.is_ok());
+    P4Change::for_delete(1).run().unwrap().finish().unwrap();
 }

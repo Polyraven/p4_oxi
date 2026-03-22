@@ -1,3 +1,4 @@
+use crate::P4Out;
 use crate::client_version::P4ClientVersion;
 use crate::cmd::info::P4Info;
 use crate::error::P4Error;
@@ -26,10 +27,10 @@ fn check_p4_client_available_and_compatible() -> Result<(), P4Error> {
 }
 
 fn check_connection() -> Result<(), P4Error> {
-    P4Info::default().first_content()?;
-    // TODO: there is a bit more that can be done here,
-    // running p4 info on itself does not mean that the client can run commands against the database.
-    Ok(())
+    match P4Info::default().run()?.first()? {
+        P4Out::Content(_) => Ok(()),
+        other => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
+    }
 }
 
 /// Check if P4 client is available and if a connection to the server can be established.

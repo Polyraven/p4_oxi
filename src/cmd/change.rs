@@ -223,7 +223,7 @@ impl P4ChangeWild {
 }
 
 // p4 change -d [-f -s -O] changelist
-p4_lens!(P4ChangeDelete, P4Change, ChangeDelete, P4RunEager);
+p4_lens!(P4ChangeDelete, P4Change, ChangeDelete, P4Run);
 impl P4Change {
     pub fn for_delete(changelist_id: u64) -> P4ChangeDelete {
         P4LensedCmd::new(P4Change {
@@ -270,7 +270,7 @@ impl P4ChangeSubmit {
 }
 
 // p4 change -t restricted|public [-U user] [-f|-u|-O|-I] changelist
-p4_lens!(P4ChangeSetType, P4Change, ChangeSetType, P4RunEager);
+p4_lens!(P4ChangeSetType, P4Change, ChangeSetType, P4Run);
 impl P4Change {
     pub fn for_set_type(changelist_id: u64, vis: P4ChangeVisibility) -> P4ChangeSetType {
         P4LensedCmd::new(P4Change {
@@ -289,7 +289,7 @@ impl P4ChangeSetType {
 }
 
 // p4 change -U user [-t restricted|public] [-f] changelist
-p4_lens!(P4ChangeSetUser, P4Change, ChangeSetUser, P4RunEager);
+p4_lens!(P4ChangeSetUser, P4Change, ChangeSetUser, P4Run);
 impl P4Change {
     pub fn for_set_user(changelist_id: u64, user: impl Into<String>) -> P4ChangeSetUser {
         P4LensedCmd::new(P4Change {
@@ -309,7 +309,7 @@ p4_lens!(
     P4ChangeCrossServerDelete,
     P4Change,
     ChangeCrossServerDelete,
-    P4RunEager
+    P4Run
 );
 impl P4Change {
     pub fn for_cross_server_delete(

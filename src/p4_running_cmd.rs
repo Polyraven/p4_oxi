@@ -13,6 +13,7 @@
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 
+use crate::error::P4Error;
 use crate::iter_cmd::RunningIterCmd;
 use crate::p4_out::{Failure, InfoMessage, P4Out, ParseError, WarningMessage};
 
@@ -30,6 +31,31 @@ impl P4RunningCmd {
             inner_p4_running_cmd: self,
             _phantom: PhantomData,
         }
+    }
+
+    /// Returns the first item from the iterator, or [`P4Error::NoResults`] if empty.
+    pub fn first(&mut self) -> Result<P4Out<String>, P4Error> {
+        self.next().ok_or(P4Error::NoResults)
+    }
+
+    /// Returns the first and only item from the iterator.
+    /// Errors if the iterator is empty or yields more than one item.
+    pub fn single(&mut self) -> Result<P4Out<String>, P4Error> {
+        let item = self.first()?;
+        if let Some(extra) = self.next() {
+            return Err(P4Error::UnexpectedOutput(extra.erase_content_type()));
+        }
+        Ok(item)
+    }
+
+    /// Consumes all remaining items, returning an error on Failure or ParseError.
+    pub fn finish(&mut self) -> Result<(), P4Error> {
+        for item in self {
+            if matches!(item, P4Out::Failure(_) | P4Out::ParseError(_)) {
+                return Err(P4Error::UnexpectedOutput(item.erase_content_type()));
+            }
+        }
+        Ok(())
     }
 }
 
@@ -66,6 +92,28 @@ impl Iterator for P4RunningCmd {
 pub struct P4TypedRunningCmd<T> {
     inner_p4_running_cmd: P4RunningCmd,
     _phantom: PhantomData<T>,
+}
+
+impl<T: DeserializeOwned> P4TypedRunningCmd<T> {
+    /// Returns the first item from the iterator, or [`P4Error::NoResults`] if empty.
+    pub fn first(&mut self) -> Result<P4Out<T>, P4Error> {
+        self.next().ok_or(P4Error::NoResults)
+    }
+
+    /// Returns the first and only item from the iterator.
+    /// Errors if the iterator is empty or yields more than one item.
+    pub fn single(&mut self) -> Result<P4Out<T>, P4Error> {
+        let item = self.first()?;
+        if let Some(extra) = self.next() {
+            return Err(P4Error::UnexpectedOutput(extra.erase_content_type()));
+        }
+        Ok(item)
+    }
+
+    /// Consumes all remaining items, returning an error on Failure or ParseError.
+    pub fn finish(&mut self) -> Result<(), P4Error> {
+        self.inner_p4_running_cmd.finish()
+    }
 }
 
 impl<T: DeserializeOwned> Iterator for P4TypedRunningCmd<T> {

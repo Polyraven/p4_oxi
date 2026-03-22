@@ -262,7 +262,7 @@ impl P4WorkspaceSubmit {
 }
 
 // p4 client -d [-f [-Fs|-Fd]] name
-p4_lens!(P4WorkspaceDelete, P4Workspace, WorkspaceDelete, P4RunEager);
+p4_lens!(P4WorkspaceDelete, P4Workspace, WorkspaceDelete, P4Run);
 impl P4Workspace {
     pub fn for_delete(name: impl Into<String>) -> P4WorkspaceDelete {
         P4LensedCmd::new(P4Workspace {
@@ -285,7 +285,7 @@ p4_lens!(
     P4WorkspaceForcedDelete,
     P4Workspace,
     WorkspaceForcedDelete,
-    P4RunEager
+    P4Run
 );
 impl P4WorkspaceForcedDelete {
     p4_expose!(with_shelved_policy, policy: P4WorkspaceShelvedPolicy);
@@ -296,7 +296,7 @@ p4_lens!(
     P4WorkspaceSwitchStream,
     P4Workspace,
     WorkspaceSwitchStream,
-    P4RunEager
+    P4Run
 );
 impl P4Workspace {
     pub fn for_switch_to_stream(stream: impl Into<String>) -> P4WorkspaceSwitchStream {
@@ -317,7 +317,7 @@ p4_lens!(
     P4WorkspaceSwitchTemplate,
     P4Workspace,
     WorkspaceSwitchTemplate,
-    P4RunEager
+    P4Run
 );
 impl P4Workspace {
     pub fn for_switch_to_template(template: impl Into<String>) -> P4WorkspaceSwitchTemplate {
@@ -338,7 +338,7 @@ p4_lens!(
     P4WorkspaceCrossServerDelete,
     P4Workspace,
     WorkspaceCrossServerDelete,
-    P4RunEager
+    P4Run
 );
 impl P4Workspace {
     pub fn for_cross_server_delete(

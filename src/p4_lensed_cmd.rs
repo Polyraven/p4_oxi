@@ -18,11 +18,8 @@ pub trait P4CmdMode {}
 pub trait P4RunMode {}
 
 // Marker structs for valid command run modes.
-pub struct P4RunQuery;
-impl P4RunMode for P4RunQuery {}
-
-pub struct P4RunEager;
-impl P4RunMode for P4RunEager {}
+pub struct P4Run;
+impl P4RunMode for P4Run {}
 
 pub struct P4RunSubmit;
 impl P4RunMode for P4RunSubmit {}
@@ -98,23 +95,9 @@ macro_rules! p4_lens {
 // P4Cmd passthrough; mirrors P4Cmd trait methods.
 // If P4Cmd changes, update these impls.
 
-impl<C: P4Cmd, M: P4CmdMode> P4LensedCmd<C, M, P4RunEager> {
-    pub fn apply(self) -> Result<(), P4Error> {
-        self.inner_cmd.apply()
-    }
-}
-
-impl<C: P4Cmd, M: P4CmdMode> P4LensedCmd<C, M, P4RunQuery> {
+impl<C: P4Cmd, M: P4CmdMode> P4LensedCmd<C, M, P4Run> {
     pub fn run(self) -> Result<P4TypedRunningCmd<C::Output>, P4Error> {
         self.inner_cmd.run()
-    }
-
-    pub fn single_content(self) -> Result<C::Output, P4Error> {
-        self.inner_cmd.single_content()
-    }
-
-    pub fn first_content(self) -> Result<C::Output, P4Error> {
-        self.inner_cmd.first_content()
     }
 }
 

@@ -8,7 +8,8 @@ use crate::{
     global_options::GlobalOptions,
     iter_cmd::IterCmd,
     p4_out::P4Out,
-    p4_running_cmd::{P4RunningCmd, P4TypedRunningCmd},
+    p4_running_cmd::P4RunningCmd,
+    p4_running_cmd::P4TypedRunningCmd,
 };
 
 /// A General low-level wrapper around P4 CLI commands.
@@ -19,19 +20,21 @@ use crate::{
 /// This struct is using the builder pattern where one would construct a command and than execute it.
 /// Example:
 /// ```rust, ignore
-/// P4RawCmd::new("info").single_content()?
+/// let info = P4RawCmd::new("info").run()?.single()?;
 ///```
 ///
-/// Different part of the command are set by individual functions.
+/// Different parts of the command are set by individual functions.
 /// ```rust, ignore
-///     P4RawCmd::new("fstat")
-///     .wildcard(r"c:\my_workspace\my_directory\...")
+/// let files: Vec<String> = P4RawCmd::new("fstat")
+///     .with_wildcard(r"c:\my_workspace\my_directory\...")
 ///     .with_arg_value("-m", "5")
-///     .start()?.for_each(|_| {});
+///     .run()?
+///     .filter_map(|item| item.take_content())
+///     .collect();
 ///```
 ///
-/// The `.start()?` here starts the executions and provides an iterator while p4 is still running.
-/// Thus providing effortless concurrency without the need of threads.
+/// `.run()` starts execution and provides an iterator while p4 is still running.
+/// Use `.first()`, `.single()`, or `.finish()` on the result to consume conveniently.
 ///
 ///
 /// CmdRef documentation:
@@ -136,7 +139,7 @@ impl P4RawCmd {
 
     /// Will start a P4RunningCmd that can be used as iterator. Or .collected() immediately.
     /// At this point the output one iterates on is not typed, so each item would be the pure output per item as P4 returns it.
-    /// Howver one can use .cast() to get a concrete type. This is what P4Cmd and P4FormCmd traits already do with the output type specified.
+    /// However one can use .cast() to get a concrete type. This is what P4Cmd and P4FormCmd traits already do with the output type specified.
     pub fn run(self) -> Result<P4RunningCmd, P4Error> {
         if self.form_input.is_some() || matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
@@ -158,6 +161,7 @@ impl P4RawCmd {
     ///    .submit_form()?;
     /// ```
     /// Note that forms should implement P4FormCmd and P4RawCmd would not need to be used.
+    /// For reading a form with P4RawCmd use: .with_read_form().run()?.cast::<String>()
     pub fn submit_form(self) -> Result<String, P4Error> {
         if self.form_input.is_none() || !matches!(self.form_action, P4FormAction::Submit) {
             return Err(P4Error::InvalidUsage(
@@ -201,43 +205,6 @@ pub trait P4Cmd: Into<P4RawCmd> {
 
     fn run(self) -> Result<P4TypedRunningCmd<Self::Output>, P4Error> {
         Ok(self.into().run()?.cast())
-    }
-
-    /// Returns the first item, expecting it to be Content.
-    /// Fails if the first item is a non-content message or if there are no results.
-    fn single_content(self) -> Result<Self::Output, P4Error> {
-        match self.run()?.next() {
-            Some(P4Out::Content(v)) => Ok(v),
-            Some(other) => Err(P4Error::UnexpectedOutput(other.erase_content_type())),
-            None => Err(P4Error::NoResults),
-        }
-    }
-
-    /// Skips Info and Warning messages, returning the first Content item.
-    /// Fails on Failure/ParseError, or if no Content is found.
-    fn first_content(self) -> Result<Self::Output, P4Error> {
-        for item in self.run()? {
-            match item {
-                P4Out::Content(v) => return Ok(v),
-                P4Out::Info(_) | P4Out::Warning(_) => continue,
-                other => return Err(P4Error::UnexpectedOutput(other.erase_content_type())),
-            }
-        }
-        Err(P4Error::NoResults)
-    }
-
-    /// Executes the command without returning anything, usefull for fire and forget commands.
-    /// If the return value is required, use run()
-    fn apply(self) -> Result<(), P4Error> {
-        for item in self.run()? {
-            match item {
-                P4Out::Failure(_) | P4Out::ParseError(_) => {
-                    return Err(P4Error::UnexpectedOutput(item.erase_content_type()));
-                }
-                _ => {}
-            }
-        }
-        Ok(())
     }
 }
 
