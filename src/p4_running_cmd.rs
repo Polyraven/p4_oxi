@@ -63,23 +63,17 @@ impl Iterator for P4RunningCmd {
     type Item = P4Out<String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            let Some(value) = self.inner_iter_cmd.next() else {
-                return None;
-            };
+        let value = self.inner_iter_cmd.next()?;
 
-            match value {
-                Err(e) => return Some(P4Out::Failure(P4Failure { data: e })),
-                Ok(line) => {
-                    if let Ok(warning_message) = serde_json::from_str::<P4WarningMessage>(&line) {
-                        return Some(P4Out::Warning(warning_message));
-                    }
-
-                    if let Ok(info_message) = serde_json::from_str::<P4InfoMessage>(&line) {
-                        return Some(P4Out::Info(info_message));
-                    }
-
-                    return Some(P4Out::Content(line));
+        match value {
+            Err(e) => Some(P4Out::Failure(P4Failure { data: e })),
+            Ok(line) => {
+                if let Ok(warning_message) = serde_json::from_str::<P4WarningMessage>(&line) {
+                    Some(P4Out::Warning(warning_message))
+                } else if let Ok(info_message) = serde_json::from_str::<P4InfoMessage>(&line) {
+                    Some(P4Out::Info(info_message))
+                } else {
+                    Some(P4Out::Content(line))
                 }
             }
         }
