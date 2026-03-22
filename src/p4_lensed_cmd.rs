@@ -64,7 +64,7 @@ impl<C, M: P4CmdMode, R: P4RunMode> P4LensedCmd<C, M, R> {
 /// Making it faster to create P4CmdModes by providing an easy way to provide a passthrough
 ///
 /// Example for exposing a function of the inner_cmd:
-/// ```rust, no_run
+/// ```rust,ignore
 /// expose!(with_user, u: String);
 /// ```
 ///

@@ -18,12 +18,12 @@ use crate::{
 ///
 /// This struct is using the builder pattern where one would construct a command and than execute it.
 /// Example:
-/// ```ignore
+/// ```rust, ignore
 /// P4RawCmd::new("info").single_content()?
 ///```
 ///
 /// Different part of the command are set by individual functions.
-/// ```ignore
+/// ```rust, ignore
 ///     P4RawCmd::new("fstat")
 ///     .wildcard(r"c:\my_workspace\my_directory\...")
 ///     .with_arg_value("-m", "5")
@@ -171,7 +171,8 @@ impl P4RawCmd {
 
 impl From<P4RawCmd> for IterCmd {
     fn from(p4_cmd: P4RawCmd) -> Self {
-        let mut cmd = IterCmd::new("p4")
+        let p4_bin = std::env::var("_FAKE_P4_BIN").unwrap_or_else(|_| "p4".into());
+        let mut cmd = IterCmd::new(p4_bin)
             .args(&p4_cmd.g_option.to_arg_list())
             .arg(&p4_cmd.cmd)
             .args(&p4_cmd.form_action.to_arg_list())
@@ -243,6 +244,7 @@ pub trait P4Cmd: Into<P4RawCmd> {
 /// Trait for commands that read or submit P4 forms.
 ///
 /// Example implementation for a command:
+/// ```rust, ignore
 /// impl P4FormCmd for P4Change {
 ///     type FormSubmitOutput = u64;
 ///     type Form = P4ChangeForm;
@@ -251,7 +253,7 @@ pub trait P4Cmd: Into<P4RawCmd> {
 ///          // Parse into FormSubmitOutput here
 ///     }
 /// }
-///
+/// ```
 /// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
 pub trait P4FormCmd: Into<P4RawCmd> {
     type FormSubmitOutput;

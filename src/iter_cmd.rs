@@ -63,9 +63,10 @@ impl IterCmd {
                 ".send_input() called with no input actually set.",
             ));
         };
-        let stdin = pipe.stdin.as_mut().ok_or_else(|| {
-            P4Error::ProcessError("Failed to open stdin".to_string(), None)
-        })?;
+        let stdin = pipe
+            .stdin
+            .as_mut()
+            .ok_or_else(|| P4Error::ProcessError("Failed to open stdin".to_string(), None))?;
         stdin.write_all(input.as_bytes())?;
         stdin.flush()?;
 
@@ -75,10 +76,7 @@ impl IterCmd {
             Ok(std_out.into_owned())
         } else {
             let std_err = String::from_utf8_lossy(&output.stderr);
-            Err(P4Error::ProcessError(
-                format!("stderr: {std_err}"),
-                None,
-            ))
+            Err(P4Error::ProcessError(format!("stderr: {std_err}"), None))
         }
     }
 
