@@ -96,7 +96,7 @@ fn cmd_first_result_deserializes() {
 #[test]
 fn cmd_multiple_results_iterate_and_deserialize() {
     let _guard = FakeP4Guard::setup();
-    let results: Vec<P4FStatOut> = P4FStat::of_many(&["//my_depot/..."])
+    let results: Vec<P4FStatOut> = P4FStat::of(&["//my_depot/..."])
         .run()
         .unwrap()
         .filter_map(|item| item.take_content())

@@ -5,7 +5,7 @@ use crate::p4_out::P4Out;
 
 /// Returns a list of file paths matching the given wildcards.
 pub fn get_list_of_files(wildcards: &[&str]) -> Result<Vec<String>, P4Error> {
-    Ok(P4FStat::of_many(wildcards)
+    Ok(P4FStat::of(wildcards)
         .run()?
         .filter_map(P4Out::take_content)
         .filter_map(|v| v.client_file)

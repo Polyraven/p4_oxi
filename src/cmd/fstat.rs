@@ -311,15 +311,7 @@ impl P4FStatSort {
 }
 
 impl P4FStat {
-    pub fn of_one(wildcard: impl Into<String>) -> Self {
-        // TODO: if this is a wildcard here still it may return multiple values.
-        Self {
-            wildcards: vec![wildcard.into()],
-            ..Default::default()
-        }
-    }
-
-    pub fn of_many(wildcards: &[impl ToString]) -> Self {
+    pub fn of(wildcards: &[impl ToString]) -> Self {
         Self {
             wildcards: wildcards.iter().map(|w| w.to_string()).collect(),
             ..Default::default()

@@ -12,3 +12,4 @@
 - [x] Rename `P4Form::convert()` to `to_p4_form_str()`, blanket implementation using serde + `multiline_fields()`
 - [x] Complete `P4ChangeForm` fields (added `ImportedBy`, `Identity`, `Jobs`, `Stream`, `Files`)
 - [x] `apply()` removed, replaced by `.run()?.finish()` -- consumption methods (`first`, `single`, `finish`) now live on running command types
+- [ ] Flesh out `GlobalOptions` beyond just `-ztag -Mj`: add `-p` (port), `-u` (user), `-c` (client), `-d` (cwd) at minimum, update `to_arg_list()`, and expose per-command overrides through lensed wrappers
