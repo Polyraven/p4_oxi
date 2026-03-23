@@ -22,7 +22,7 @@ Current implementation wraps the P4-CLI, minimum supported version: `2016.1`
 ### Typed Commands
 
 - Functional approach: 
-```rust
+```rust, ignore
 let fstats: Vec<P4FStatOut> = P4FStat::of(&["//depot/main/..."])
     .with_max(5)
     .run()?
@@ -31,7 +31,7 @@ let fstats: Vec<P4FStatOut> = P4FStat::of(&["//depot/main/..."])
 ```
 
 - Imperative approach:
-```rust
+```rust, ignore
 let mut fstats: Vec<P4FStatOut> = Vec::new();
 for item in P4FStat::of(&["//depot/main/..."]).with_max(5).run()? {
     // demonstrating how the rich return type can be used to decide on different paths
@@ -53,7 +53,7 @@ for item in P4FStat::of(&["//depot/main/..."]).with_max(5).run()? {
 One can also use: `.first()`, `.single()` & `.finish()` shorthand commands to avoid dealing with the iterator when not necessary.
 
 ### Raw Commands
-```rust
+```rust, ignore
 // Here is the command equivalent:
 let running_raw_cmd = P4RawCmd::new("fstat")
       .with_arg_value("-m", 5)
@@ -71,7 +71,7 @@ let fstats: Vec<P4FStatOut> = running_raw_cmd
 ### Forms / Specs
 
 Form uploading like when creating changelists or workspaces is also possible using the `.submit_form()` and `.read_form()` methods.
-```rust
+```rust, ignore
 let changelist_form = P4ChangeForm::new("my_description")?;
 let new_changelist_id = P4Change::for_submit().submit(changelist_form);
 ```
