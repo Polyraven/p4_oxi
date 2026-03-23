@@ -83,3 +83,7 @@ let new_changelist_id = P4Change::for_submit().submit(changelist_form);
 Most work and thought so far went into the command building machinery and that is considered working. The implemented commands serve as proof of concept of the approach, but only a few are covered so far. For the rest, fall back to P4RawCmd.
 
 ---
+
+## License
+
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT License](LICENSE-MIT), at your option.
