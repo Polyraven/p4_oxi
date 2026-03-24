@@ -58,7 +58,7 @@ impl P4ChangeForm {
 
     /// Creates a new changelist form with the given description.
     ///
-    /// ```rust,ignore
+    /// ```rust, ignore
     /// let form = P4ChangeForm::new("my_changelist")?;
     /// let changelist_id = P4Change::for_submit().submit(form)?;
     /// ```

@@ -1,8 +1,8 @@
 //! Common structs for deserializable output responses of the commands.
-//! TODO: It should be probably moved to cmd sub-crate in the future.
+//! TODO: It should probably be moved to cmd sub-crate in the future.
 
 use serde::Deserialize;
-/// TODO: meant to be the output of a number of different formats,
+/// TODO: FileAction is meant to be the output of a number of different formats,
 /// like:
 /// - p4 sync
 /// - p4 clean
@@ -17,7 +17,7 @@ pub struct FileAction {
     pub depotFile: String,
     pub fileSize: String,
     pub rev: String,
-    // Fixme: not complete
+    // FIXME: not complete
 }
 
 /// TODO: Should be an output of P4Clients / P4Workspaces in the future
@@ -38,5 +38,5 @@ pub struct Workspace {
     pub SubmitOptions: String,
     pub Update: String,
     pub client: String,
-    // Fixme: not complete
+    // FIXME: not complete
 }

@@ -1,4 +1,4 @@
-//! Defines struct that helps defined Lensed TypeState Commands for strict control on what can be ran on them.
+//! Defines struct that helps define typestate commands for strict control on what can be run on them.
 //! This approach still allows anything implementing P4Cmd and P4FormCmd to run all the methods, these only allow filtering when returned by factory methods.
 
 use std::marker::PhantomData;
@@ -61,7 +61,7 @@ impl<C, M: P4CmdMode, R: P4RunMode> P4LensedCmd<C, M, R> {
 /// Making it faster to create P4CmdModes by providing an easy way to provide a passthrough
 ///
 /// Example for exposing a function of the inner_cmd:
-/// ```rust,ignore
+/// ```rust, ignore
 /// expose!(with_user, u: String);
 /// ```
 ///

@@ -15,9 +15,9 @@ use crate::{
 /// A General low-level wrapper around P4 CLI commands.
 ///
 /// Other high level commands in the end convert to this.
-/// This here meant to be able to help run any command which is not or only partially implemented in .cmd
+/// This is meant to help run any command which is not or only partially implemented in .cmd
 ///
-/// This struct is using the builder pattern where one would construct a command and than execute it.
+/// This struct is using the builder pattern where one would construct a command and then execute it.
 /// Example:
 /// ```rust, ignore
 /// let info = P4RawCmd::new("info").run()?.single()?;
@@ -192,7 +192,7 @@ impl From<P4RawCmd> for IterCmd {
 /// Trait for commands that deserialize the server output to the specified output type.
 ///
 /// To make these methods available on a command one would add this during implementation:
-/// ```rust,ignore
+/// ```rust, ignore
 /// impl P4Cmd for P4FStat {
 ///    type Output = P4FStatOut;
 /// }
