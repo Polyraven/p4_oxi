@@ -121,7 +121,6 @@ pub mod cmd;
 mod error;
 mod global_options;
 mod iter_cmd;
-pub mod ops;
 mod outputs;
 mod p4_cmd;
 mod p4_out;
