@@ -17,12 +17,27 @@
 //!
 //!---
 //!
-//!## Example:
+//!## Examples:
 //!
-//!### Typed Commands
+//!### Getting a single result:
+//!
+//!```rust, ignore
+//!use p4_oxi::{*, cmd::P4FStat};
+//!
+//!match P4FStat::of(&["//depot/main/my_file.txt"]).run()?.single()? {
+//!    P4Out::Content(fstat_out) =>  println!("{}", fstat_out.depot_file),
+//!    P4Out::Warning(w) => println!("Warning: {w}"),
+//!    other => println!("Unexpected: {other:?}"),
+//!}
+//!```
+//!
+//!### Iterators
+//!Calling `.run()` starts the p4 process and returns an iterator that yields results as they arrive, allowing you to process or bail out before the command finishes.
 //!
 //!- Functional approach:
 //!```rust, ignore
+//!use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
+//!
 //!let fstats: Vec<P4FStatOut> = P4FStat::of(&["//depot/main/..."])
 //!    .with_max(5)
 //!    .run()?
@@ -32,6 +47,8 @@
 //!
 //!- Imperative approach:
 //!```rust, ignore
+//!use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
+//!
 //!let mut fstats: Vec<P4FStatOut> = Vec::new();
 //!for item in P4FStat::of(&["//depot/main/..."]).with_max(5).run()? {
 //!    // demonstrating how the rich return type can be used to decide on different paths
@@ -50,11 +67,10 @@
 //!}
 //!```
 //!
-//!One can also use: `.first()`, `.single()` & `.finish()` shorthand commands to avoid dealing with the iterator when not necessary.
-//!
-//!### Raw Commands
+//!- Raw commands:
 //!```rust, ignore
-//!// Here is the command equivalent:
+//!use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
+//!
 //!let running_raw_cmd = P4RawCmd::new("fstat")
 //!      .with_arg_value("-m", 5)
 //!      .with_wildcard("//depot/main/...")
@@ -72,8 +88,19 @@
 //!
 //!Form uploading like when creating changelists or workspaces is also possible using the `.submit_form()` and `.read_form()` methods.
 //!```rust, ignore
+//!use p4_oxi::{*, cmd::{P4Change, P4ChangeForm}};
+//!
 //!let changelist_form = P4ChangeForm::new("my_description")?;
 //!let new_changelist_id = P4Change::for_submit().submit(changelist_form);
+//!```
+//!
+//!### Fire and forget
+//!When you don't need individual results, `.finish()` runs the command to completion and returns an error if anything failed.
+//!
+//!```rust, ignore
+//!use p4_oxi::{*, cmd::P4Change};
+//!
+//!P4Change::for_delete(123456).run()?.finish()?;
 //!```
 //!
 //!---

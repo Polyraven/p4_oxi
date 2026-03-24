@@ -13,19 +13,19 @@ use crate::*;
 #[derive(Debug, Clone, Default)]
 pub struct P4FStat {
     wildcards: Vec<String>,
-    filter: Option<String>,              // -F filter
-    fast_lookup: bool,                   // -L
-    fields: Option<String>,              // -T fields
-    max: Option<u32>,                    // -m max
-    reverse: bool,                       // -r
-    at_changelist: Option<u64>,          // -c change
-    in_changelist: Option<u64>,          // -e change
-    attribute_pattern: Option<String>,   // -A pattern
-    include_unload: bool,                // -U
-    stream_views: bool,                  // --streamviews
-    output_opts: Vec<P4FStatOutputOpt>,  // -O{x}
-    restrict_opts: Vec<P4FStatRestrict>, // -R{x}
-    sort_opts: Vec<P4FStatSort>,         // -S{x}
+    filter: Option<String>,                  // -F filter
+    fast_lookup: bool,                       // -L
+    fields: Option<String>,                  // -T fields
+    max: Option<u32>,                        // -m max
+    reverse: bool,                           // -r
+    at_changelist: Option<u64>,              // -c change
+    in_changelist: Option<u64>,              // -e change
+    attribute_pattern: Option<String>,       // -A pattern
+    include_unload: bool,                    // -U
+    stream_views: bool,                      // --streamviews
+    output_opts: Vec<P4FStatOptionalOutput>, // -O{x}
+    restrict_opts: Vec<P4FStatRestrict>,     // -R{x}
+    sort_opts: Vec<P4FStatSort>,             // -S{x}
 }
 
 // Output //////////////////////////////////////////////////////////////////////
@@ -207,7 +207,7 @@ impl P4Cmd for P4FStat {
 
 /// Sub-flags for `-O{x}` controlling what extra data fstat outputs.
 #[derive(Debug, Clone, Copy)]
-pub enum P4FStatOutputOpt {
+pub enum P4FStatOptionalOutput {
     /// `-Ob` Archive file path, revision, type, and local paths.
     Archive,
     /// `-Od` MD5 digest of attribute values.
@@ -217,7 +217,7 @@ pub enum P4FStatOutputOpt {
     /// `-Of` All revisions for the given files.
     AllRevs,
     /// `-Ol` File size and MD5 digest fields.
-    FileSize,
+    FileSizeAndDigest,
     /// `-Om` Other ditto-mapped client files.
     DittoMap,
     /// `-On` Attribute trait value storage location.
@@ -232,14 +232,14 @@ pub enum P4FStatOutputOpt {
     GlobalLock,
 }
 
-impl P4FStatOutputOpt {
+impl P4FStatOptionalOutput {
     fn as_char(&self) -> char {
         match self {
             Self::Archive => 'b',
             Self::DigestAttr => 'd',
             Self::HexEncode => 'e',
             Self::AllRevs => 'f',
-            Self::FileSize => 'l',
+            Self::FileSizeAndDigest => 'l',
             Self::DittoMap => 'm',
             Self::TraitLocation => 'n',
             Self::DepotPath => 'p',
@@ -368,7 +368,7 @@ impl P4FStat {
         self
     }
 
-    pub fn with_output(mut self, opt: P4FStatOutputOpt) -> Self {
+    pub fn with_optional_output(mut self, opt: P4FStatOptionalOutput) -> Self {
         self.output_opts.push(opt);
         self
     }

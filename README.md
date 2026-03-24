@@ -17,12 +17,27 @@ Current implementation wraps the P4-CLI, minimum supported version: `2016.1`
 
 ---
 
-## Example:
+## Examples:
 
-### Typed Commands
+### Getting a single result:
 
-- Functional approach: 
-```rust, ignore
+```rust
+use p4_oxi::{*, cmd::P4FStat};
+
+match P4FStat::of(&["//depot/main/my_file.txt"]).run()?.single()? {
+    P4Out::Content(fstat_out) =>  println!("{}", fstat_out.depot_file),
+    P4Out::Warning(w) => println!("Warning: {w}"),
+    other => println!("Unexpected: {other:?}"),
+}
+```
+
+### Iterators
+Calling .run() starts the p4 process and returns an iterator that yields results as they arrive, allowing you to process or bail out before the command finishes.
+
+- Functional approach:
+```rust
+use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
+
 let fstats: Vec<P4FStatOut> = P4FStat::of(&["//depot/main/..."])
     .with_max(5)
     .run()?
@@ -31,30 +46,31 @@ let fstats: Vec<P4FStatOut> = P4FStat::of(&["//depot/main/..."])
 ```
 
 - Imperative approach:
-```rust, ignore
+```rust
+use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
+
 let mut fstats: Vec<P4FStatOut> = Vec::new();
 for item in P4FStat::of(&["//depot/main/..."]).with_max(5).run()? {
     // demonstrating how the rich return type can be used to decide on different paths
     match item {
         // Demonstrates stopping the command, but note that P4 commands are not transactional.
         P4Out::ParseError(_) | P4Out::Failure(_) => { break },
-        
+
         // Non fatal per warning, like `file(s) up-to-date.` during sync etc.
-        P4Out::Warning(v) => { println!("{v}") }, 
-        
+        P4Out::Warning(v) => { println!("{v}") },
+
         // Valid value, collecting it.
         P4Out::Content(fstat_out) => { fstats.push(fstat_out) },
-        
+
         P4Out::Info(_) => { continue; },
     }
 }
 ```
 
-One can also use: `.first()`, `.single()` & `.finish()` shorthand commands to avoid dealing with the iterator when not necessary.
+- Raw commands:
+```rust
+use p4_oxi::{*, cmd::{P4FStat, P4FStatOut}};
 
-### Raw Commands
-```rust, ignore
-// Here is the command equivalent:
 let running_raw_cmd = P4RawCmd::new("fstat")
       .with_arg_value("-m", 5)
       .with_wildcard("//depot/main/...")
@@ -71,9 +87,20 @@ let fstats: Vec<P4FStatOut> = running_raw_cmd
 ### Forms / Specs
 
 Form uploading like when creating changelists or workspaces is also possible using the `.submit_form()` and `.read_form()` methods.
-```rust, ignore
+```rust
+use p4_oxi::{*, cmd::{P4Change, P4ChangeForm}};
+
 let changelist_form = P4ChangeForm::new("my_description")?;
 let new_changelist_id = P4Change::for_submit().submit(changelist_form);
+```
+
+### Fire and forget
+When you don't need individual results, .finish() runs the command to completion and returns an error if anything failed.
+  
+```rust
+use p4_oxi::{*, cmd::P4Change};
+
+P4Change::for_delete(123456).run()?.finish()?;
 ```
 
 ---
