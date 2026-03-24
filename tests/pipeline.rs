@@ -3,7 +3,7 @@
 //! Tests the full path at three levels:
 //!   Raw:     P4RawCmd -> IterCmd -> RunningIterCmd -> P4RunningCmd -> P4Out<String>
 //!   Command: CmdStruct -> P4Cmd trait -> P4TypedRunningCmd -> P4Out<T>
-//!   Lensed:  P4LensedCmd -> trait passthrough -> same pipeline
+//!   Focused: P4FocusedCmd -> trait passthrough -> same pipeline
 //!
 //! Uses the `fake_p4` binary (feature `mock-p4`) instead of a real Perforce server.
 //!
@@ -111,11 +111,11 @@ fn cmd_multiple_results_iterate_and_deserialize() {
     assert_eq!(results[2].head().unwrap().rev, 2);
 }
 
-// Lensed command pipeline /////////////////////////////////////////////////////
-// Tests: + P4LensedCmd passthrough to P4Cmd / P4FormCmd trait methods
+// Typestate command pipeline /////////////////////////////////////////////////////
+// Tests: + P4FocusedCmd passthrough to P4Cmd / P4FormCmd trait methods
 
 #[test]
-fn lensed_form_read() {
+fn focused_form_read() {
     let _guard = FakeP4Guard::setup();
     let form = P4Change::for_read(None).read().unwrap();
     assert_eq!(form.change, "new");
@@ -125,7 +125,7 @@ fn lensed_form_read() {
 }
 
 #[test]
-fn lensed_form_submit() {
+fn focused_form_submit() {
     let _guard = FakeP4Guard::setup();
     let form = P4ChangeForm {
         change: "new".to_string(),
@@ -142,7 +142,7 @@ fn lensed_form_submit() {
 }
 
 #[test]
-fn lensed_finish() {
+fn focused_finish() {
     let _guard = FakeP4Guard::setup();
     P4Change::for_delete(1).run().unwrap().finish().unwrap();
 }

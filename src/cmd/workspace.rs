@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{p4_lensed_cmd::*, *};
+use crate::{p4_focused_cmd::*, *};
 
 // Aliases /////////////////////////////////////////////////////////////////////
 
@@ -212,13 +212,13 @@ impl P4Workspace {
     }
 }
 
-// Modes & Lensed builder passthroughs per mode ////////////////////////////////
+// Modes & Focused builder passthroughs per mode ///////////////////////////////
 
 // Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
-p4_lens!(P4WorkspaceWild, P4Workspace, WorkspaceWild, P4RunNone);
+p4_focus!(P4WorkspaceWild, P4Workspace, WorkspaceWild, P4RunNone);
 impl P4Workspace {
     pub fn wild_west() -> P4WorkspaceWild {
-        P4LensedCmd::new(P4Workspace::default())
+        P4FocusedCmd::new(P4Workspace::default())
     }
 }
 impl P4WorkspaceWild {
@@ -234,10 +234,10 @@ impl P4WorkspaceWild {
 }
 
 // p4 client -o [-t template] [-T type] [-S stream [-c change]] [name]
-p4_lens!(P4WorkspaceRead, P4Workspace, WorkspaceRead, P4RunRead);
+p4_focus!(P4WorkspaceRead, P4Workspace, WorkspaceRead, P4RunRead);
 impl P4Workspace {
     pub fn for_read(name: Option<&str>) -> P4WorkspaceRead {
-        P4LensedCmd::new(P4Workspace {
+        P4FocusedCmd::new(P4Workspace {
             name: name.map(str::to_string),
             ..Default::default()
         })
@@ -251,10 +251,10 @@ impl P4WorkspaceRead {
 }
 
 // p4 client -i [-f]
-p4_lens!(P4WorkspaceSubmit, P4Workspace, WorkspaceSubmit, P4RunSubmit);
+p4_focus!(P4WorkspaceSubmit, P4Workspace, WorkspaceSubmit, P4RunSubmit);
 impl P4Workspace {
     pub fn for_submit() -> P4WorkspaceSubmit {
-        P4LensedCmd::new(P4Workspace::default())
+        P4FocusedCmd::new(P4Workspace::default())
     }
 }
 impl P4WorkspaceSubmit {
@@ -262,10 +262,10 @@ impl P4WorkspaceSubmit {
 }
 
 // p4 client -d [-f [-Fs|-Fd]] name
-p4_lens!(P4WorkspaceDelete, P4Workspace, WorkspaceDelete, P4Run);
+p4_focus!(P4WorkspaceDelete, P4Workspace, WorkspaceDelete, P4Run);
 impl P4Workspace {
     pub fn for_delete(name: impl Into<String>) -> P4WorkspaceDelete {
-        P4LensedCmd::new(P4Workspace {
+        P4FocusedCmd::new(P4Workspace {
             name: Some(name.into()),
             delete: true,
             ..Default::default()
@@ -276,12 +276,12 @@ impl P4WorkspaceDelete {
     /// -f: transitions to P4WorkspaceForcedDelete, unlocking [-Fs|-Fd]
     pub fn with_force(self) -> P4WorkspaceForcedDelete {
         let inner = self.inner_cmd.with_force();
-        P4LensedCmd::new(inner)
+        P4FocusedCmd::new(inner)
     }
 }
 
 // p4 client -d -f [-Fs|-Fd] name
-p4_lens!(
+p4_focus!(
     P4WorkspaceForcedDelete,
     P4Workspace,
     WorkspaceForcedDelete,
@@ -292,7 +292,7 @@ impl P4WorkspaceForcedDelete {
 }
 
 // p4 client -s [-f] -S stream [name]
-p4_lens!(
+p4_focus!(
     P4WorkspaceSwitchStream,
     P4Workspace,
     WorkspaceSwitchStream,
@@ -300,7 +300,7 @@ p4_lens!(
 );
 impl P4Workspace {
     pub fn for_switch_to_stream(stream: impl Into<String>) -> P4WorkspaceSwitchStream {
-        P4LensedCmd::new(P4Workspace {
+        P4FocusedCmd::new(P4Workspace {
             switch: true,
             stream: Some(stream.into()),
             ..Default::default()
@@ -313,7 +313,7 @@ impl P4WorkspaceSwitchStream {
 }
 
 // p4 client -s [-f] -t template [name]
-p4_lens!(
+p4_focus!(
     P4WorkspaceSwitchTemplate,
     P4Workspace,
     WorkspaceSwitchTemplate,
@@ -321,7 +321,7 @@ p4_lens!(
 );
 impl P4Workspace {
     pub fn for_switch_to_template(template: impl Into<String>) -> P4WorkspaceSwitchTemplate {
-        P4LensedCmd::new(P4Workspace {
+        P4FocusedCmd::new(P4Workspace {
             switch: true,
             template: Some(template.into()),
             ..Default::default()
@@ -334,7 +334,7 @@ impl P4WorkspaceSwitchTemplate {
 }
 
 // p4 client -d -f --serverid=X [-Fs] name
-p4_lens!(
+p4_focus!(
     P4WorkspaceCrossServerDelete,
     P4Workspace,
     WorkspaceCrossServerDelete,
@@ -345,7 +345,7 @@ impl P4Workspace {
         name: impl Into<String>,
         server_id: impl Into<String>,
     ) -> P4WorkspaceCrossServerDelete {
-        P4LensedCmd::new(P4Workspace {
+        P4FocusedCmd::new(P4Workspace {
             name: Some(name.into()),
             delete: true,
             force: true,

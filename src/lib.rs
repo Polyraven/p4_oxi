@@ -113,7 +113,7 @@
 //!
 
 #[macro_use]
-mod p4_lensed_cmd;
+mod p4_focused_cmd;
 
 mod check_connection;
 mod client_version;

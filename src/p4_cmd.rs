@@ -198,7 +198,7 @@ impl From<P4RawCmd> for IterCmd {
 /// }
 /// ```
 ///
-/// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
+/// Note: If method signatures change here, update the corresponding passthrough impls in `P4FocusedCmd`.
 pub trait P4Cmd: Into<P4RawCmd> {
     type Output: DeserializeOwned;
 
@@ -220,7 +220,7 @@ pub trait P4Cmd: Into<P4RawCmd> {
 ///     }
 /// }
 /// ```
-/// Note: If method signatures change here, update the corresponding passthrough impls in `P4LensedCmd`.
+/// Note: If method signatures change here, update the corresponding passthrough impls in `P4FocusedCmd`.
 pub trait P4FormCmd: Into<P4RawCmd> {
     type FormSubmitOutput;
     type Form: P4Form + DeserializeOwned + Debug + 'static;
