@@ -1,9 +1,3 @@
-//! Create or edit a changelist.
-//!
-//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_change.html#p4_change>
-//!
-//! This command works by reading and writing a P4 Form through std out and std in.
-
 use serde::{Deserialize, Serialize};
 
 use crate::{p4_focused_cmd::*, *};
@@ -15,6 +9,11 @@ pub type P4ChangelistForm = P4ChangeForm;
 
 // Command struct //////////////////////////////////////////////////////////////
 
+/// Create or edit a changelist.
+///
+/// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_change.html#p4_change>
+///
+/// This command works by reading and writing a P4ChangeForm through std out and std in.
 #[derive(Debug, Clone, Default)]
 pub struct P4Change {
     changelist_id: Option<u64>,              // positional
@@ -31,9 +30,9 @@ pub struct P4Change {
 
 // Form / Output ///////////////////////////////////////////////////////////////
 
+/// Form output of the [`P4Change`] command. Used both for creating and reading changelists.
 #[derive(Debug, Deserialize, Serialize, Default)]
 #[serde(default, rename_all = "PascalCase")]
-/// Used when creating a changelist but can be also a return value.
 pub struct P4ChangeForm {
     pub change: String,
     #[serde(rename = "Client")]
@@ -206,6 +205,7 @@ impl P4Change {
 // Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
 p4_focus!(P4ChangeWild, P4Change, ChangeWild, P4RunNone);
 impl P4Change {
+    /// Unrestricted builder exposing all flags. Use `.into_cmd()` to execute via `P4Cmd` / `P4FormCmd` traits.
     pub fn wild_west() -> P4ChangeWild {
         P4FocusedCmd::new(P4Change::default())
     }

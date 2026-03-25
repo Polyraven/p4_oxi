@@ -19,6 +19,14 @@
 //!
 //!## Examples:
 //!
+//!### Setup check
+//!Verify that the p4 client is installed, meets the minimum version, and can reach the server.
+//!```rust, ignore
+//!use p4_oxi::p4_check_ready;
+//!
+//!p4_check_ready()?;
+//!```
+//!
 //!### Getting a single result:
 //!
 //!```rust, ignore
@@ -107,7 +115,7 @@
 //!
 //!## What's done and what's missing:
 //!
-//!Most work and thought so far went into the command building machinery and that is considered working. The implemented commands serve as proof of concept of the approach, but only a few are covered so far. For the rest, fall back to P4RawCmd.
+//!Most work and thought so far went into the command building pipeline and that is considered working. The implemented commands serve as proof of concept of the approach, but only a few are covered so far. For the rest, fall back to P4RawCmd.
 //!
 //!---
 //!
@@ -126,7 +134,7 @@ mod p4_cmd;
 mod p4_out;
 mod p4_running_cmd;
 
-pub use crate::check_connection::p4_can_run_commands;
+pub use crate::check_connection::p4_check_ready;
 pub use crate::client_version::P4ClientVersion;
 pub use crate::error::P4Error;
 pub use crate::p4_cmd::{P4Cmd, P4Form, P4FormCmd, P4RawCmd};

@@ -19,6 +19,14 @@ Current implementation wraps the P4-CLI, minimum supported version: `2016.1`
 
 ## Examples:
 
+### Setup check
+Verify that the p4 client is installed, meets the minimum version, and can reach the server.
+```rust
+use p4_oxi::p4_check_ready;
+
+p4_check_ready()?;
+```
+
 ### Getting a single result:
 
 ```rust
@@ -107,7 +115,7 @@ P4Change::for_delete(123456).run()?.finish()?;
 
 ## What's done and what's missing:
 
-Most work and thought so far went into the command building machinery and that is considered working. The implemented commands serve as proof of concept of the approach, but only a few are covered so far. For the rest, fall back to P4RawCmd.
+Most work and thought so far went into the command building pipeline and that is considered working. The implemented commands serve as proof of concept of the approach, but only a few are covered so far. For the rest, fall back to P4RawCmd.
 
 ---
 

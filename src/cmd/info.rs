@@ -1,6 +1,3 @@
-//! Display information about the current P4 Server application and the shared versioning service.
-//!
-//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_info.html#p4_info>
 
 use std::collections::HashMap;
 
@@ -10,6 +7,9 @@ use crate::*;
 
 // Command struct //////////////////////////////////////////////////////////////
 
+/// Display information about the current P4 Server application and the shared versioning service.
+///
+/// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_info.html#p4_info>
 #[derive(Debug, Clone, Default)]
 pub struct P4Info {
     shortened: bool, // -s
@@ -17,6 +17,7 @@ pub struct P4Info {
 
 // Output //////////////////////////////////////////////////////////////////////
 
+/// Content output of the [`P4Info`] command.
 #[derive(Deserialize, Debug, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct P4InfoOut {

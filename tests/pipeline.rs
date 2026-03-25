@@ -1,4 +1,4 @@
-//! Integration tests for the command pipeline machinery.
+//! Integration tests for the command pipeline.
 //!
 //! Tests the full path at three levels:
 //!   Raw:     P4RawCmd -> IterCmd -> RunningIterCmd -> P4RunningCmd -> P4Out<String>

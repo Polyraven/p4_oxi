@@ -2,7 +2,7 @@
 
 use serde::Deserialize;
 
-/// A warning message from the P4 server.
+/// A non-fatal warning from the P4 server, such as `file(s) up-to-date`.
 ///
 /// For any command that has any kind of errors it will respond with a message as such:
 /// ```json
@@ -20,28 +20,32 @@ pub struct P4WarningMessage {
     pub severity: i32,
 }
 
+/// An informational message from the P4 server, not an error or warning.
+///
 /// When P4 won't do something with a file yet it's not really a problem it will output a message like so:
 /// ```json
 /// {"data":"<file_path> - must resolve #3 before submitting","level":1}
 /// ```
-/// There is an option to register a handler for these as well
 #[derive(Debug, Deserialize)]
 pub struct P4InfoMessage {
     pub data: String,
     pub level: i32,
 }
 
+/// A deserialization failure when parsing P4 server output into the expected type.
 #[derive(Debug)]
 pub struct P4ParseError {
     pub data: String,
     pub error: String,
 }
 
+/// A fatal error from the P4 server or the subprocess.
 #[derive(Debug)]
 pub struct P4Failure {
     pub data: String,
 }
 
+/// A single item yielded by a running P4 command. Categorizes server output into content, warnings, info, failures, and parse errors.
 #[derive(Debug)]
 pub enum P4Out<T> {
     Content(T),

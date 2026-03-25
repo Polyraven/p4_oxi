@@ -1,6 +1,6 @@
 use crate::P4Out;
 use crate::client_version::P4ClientVersion;
-use crate::cmd::info::P4Info;
+use crate::cmd::P4Info;
 use crate::error::P4Error;
 use crate::p4_cmd::P4Cmd;
 
@@ -29,8 +29,8 @@ fn check_connection() -> Result<(), P4Error> {
     }
 }
 
-/// Check if P4 client is available and if a connection to the server can be established.
-pub fn p4_can_run_commands() -> Result<(), P4Error> {
+/// Verify that the p4 client is installed, meets the minimum version, and can reach the server.
+pub fn p4_check_ready() -> Result<(), P4Error> {
     check_p4_client_available_and_compatible()?;
     check_connection()?;
     Ok(())

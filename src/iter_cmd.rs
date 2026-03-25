@@ -6,7 +6,7 @@ use std::process::{Child, ChildStderr, ChildStdout, Command, Stdio};
 
 use crate::error::P4Error;
 
-/// Holds the command arguments and the handlers that will be ran on each output in real time.
+/// Holds the command arguments and spawns a subprocess that can be iterated over.
 pub struct IterCmd {
     // The Command instance that will be executed in a piped subprocess.
     command: Command,

@@ -1,6 +1,3 @@
-//! Get detailed file information for files in the depot.
-//!
-//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat>
 
 use std::collections::HashMap;
 
@@ -10,6 +7,9 @@ use crate::*;
 
 // Command struct //////////////////////////////////////////////////////////////
 
+/// Get detailed file information for files in the depot.
+///
+/// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_fstat.html#p4_fstat>
 #[derive(Debug, Clone, Default)]
 pub struct P4FStat {
     wildcards: Vec<String>,
@@ -30,6 +30,7 @@ pub struct P4FStat {
 
 // Output //////////////////////////////////////////////////////////////////////
 
+/// Content output of the [`P4FStat`] command.
 #[derive(Deserialize, Debug, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct P4FStatOut {

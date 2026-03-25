@@ -1,9 +1,3 @@
-//! Create, edit, switch, or delete a workspace (client).
-//!
-//! <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_client.html>
-//!
-//! This command works by reading and writing a P4 Form through std out and std in.
-
 use serde::{Deserialize, Serialize};
 
 use crate::{p4_focused_cmd::*, *};
@@ -15,6 +9,11 @@ pub type P4ClientForm = P4WorkspaceForm;
 
 // Command struct //////////////////////////////////////////////////////////////
 
+/// Create, edit, switch, or delete a workspace (client).
+///
+/// <https://help.perforce.com/helix-core/server-apps/cmdref/current/Content/CmdRef/p4_client.html>
+///
+/// This command works by reading and writing a P4WorkspaceForm through std out and std in.
 #[derive(Debug, Clone, Default)]
 pub struct P4Workspace {
     name: Option<String>,                    // positional [name]
@@ -32,6 +31,7 @@ pub struct P4Workspace {
 
 // Form / Output ///////////////////////////////////////////////////////////////
 
+/// Form output of the [`P4Workspace`] command. Used both for creating and reading workspaces.
 #[derive(Debug, Deserialize, Serialize, Default)]
 #[serde(default, rename_all = "PascalCase")]
 pub struct P4WorkspaceForm {
@@ -217,6 +217,7 @@ impl P4Workspace {
 // Unrestricted builder -- use .into_cmd() to execute via P4Cmd / P4FormCmd traits.
 p4_focus!(P4WorkspaceWild, P4Workspace, WorkspaceWild, P4RunNone);
 impl P4Workspace {
+    /// Unrestricted builder exposing all flags. Use `.into_cmd()` to execute via `P4Cmd` / `P4FormCmd` traits.
     pub fn wild_west() -> P4WorkspaceWild {
         P4FocusedCmd::new(P4Workspace::default())
     }
