@@ -4,12 +4,8 @@ use serde::{Serialize, de::DeserializeOwned};
 use std::fmt::Debug;
 
 use crate::{
-    error::P4Error,
-    global_options::GlobalOptions,
-    iter_cmd::IterCmd,
-    p4_out::P4Out,
-    p4_running_cmd::P4RunningCmd,
-    p4_running_cmd::P4TypedRunningCmd,
+    error::P4Error, global_options::GlobalOptions, iter_cmd::IterCmd, p4_out::P4Out,
+    p4_running_cmd::P4RunningCmd, p4_running_cmd::P4TypedRunningCmd,
 };
 
 /// A General low-level wrapper around P4 CLI commands.

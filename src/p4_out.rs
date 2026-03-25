@@ -67,7 +67,6 @@ impl std::fmt::Display for P4InfoMessage {
     }
 }
 
-
 impl std::fmt::Display for P4ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
