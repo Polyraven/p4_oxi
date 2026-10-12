@@ -170,7 +170,11 @@ impl P4RawCmd {
 
 impl From<P4RawCmd> for IterCmd {
     fn from(p4_cmd: P4RawCmd) -> Self {
+        #[cfg(feature = "mock-p4")]
         let p4_bin = std::env::var("_FAKE_P4_BIN").unwrap_or_else(|_| "p4".into());
+        #[cfg(not(feature = "mock-p4"))]
+        let p4_bin = "p4";
+
         let mut cmd = IterCmd::new(p4_bin)
             .args(&p4_cmd.g_option.to_arg_list())
             .arg(&p4_cmd.cmd)

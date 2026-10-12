@@ -8,6 +8,7 @@ repository = "https://github.com/Polyraven/p4_oxi"
 readme = "README.md"
 keywords = ["perforce", "p4", "vcs", "helix"]
 categories = ["api-bindings"]
+exclude = ["todo.md"]
 
 [features]
 mock-p4 = [] # Enables the fake p4 binary for testing: cargo test --features mock-p4
